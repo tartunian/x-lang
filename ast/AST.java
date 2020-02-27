@@ -11,7 +11,7 @@ import visitor.*;
  *  The AST is built by the Parser
 */
 public abstract class AST {
-    protected ArrayList<AST> kids;
+    protected ArrayList<AST> children;
     protected int nodeNum;
     protected AST decoration;
     protected String label = "";   // label for generated code of tree
@@ -19,7 +19,7 @@ public abstract class AST {
     static int NodeCount = 0;
 
     public AST() {
-        kids = new ArrayList<AST>();
+        children = new ArrayList<AST>();
         NodeCount++;
         nodeNum = NodeCount;
     }
@@ -41,22 +41,22 @@ public abstract class AST {
  *  @param i is the number of the needed kid; it starts with kid number one
  *  @return the AST for the indicated kid
 */
-    public AST getKid(int i) {
-        if ( (i <= 0) || (i > kidCount())) {
+    public AST getChild( int i ) {
+        if ( (i <= 0) || (i > getChildCount())) {
             return null;
         }
-        return kids.get(i - 1);
+        return children.get(i - 1);
     }
 
 /**
  *  @return the number of kids at this node
 */
-    public int kidCount() {
-        return kids.size();
+    public int getChildCount() {
+        return children.size();
     }
 
-    public ArrayList<AST> getKids() {
-        return kids;
+    public ArrayList<AST> getChildren() {
+        return children;
     }
 
 /**
@@ -68,8 +68,8 @@ public abstract class AST {
 */
     public abstract Object accept(ASTVisitor v);
 
-    public AST addKid(AST kid) {
-        kids.add(kid);
+    public AST addChild( AST child ) {
+        children.add( child );
         return this;
     }
 

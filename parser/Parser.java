@@ -55,7 +55,7 @@ import ast.*;
 public class Parser {
 
     private Token currentToken;
-    private Lexer lex;
+    private Lexer lexer;
     private EnumSet<Tokens> relationalOps
             = EnumSet.of(Tokens.Equal, Tokens.NotEqual, Tokens.Less, Tokens.LessEqual);
     private EnumSet<Tokens> addingOps
@@ -71,7 +71,7 @@ public class Parser {
      */
     public Parser(String sourceProgram) throws Exception {
         try {
-            lex = new Lexer(sourceProgram);
+            lexer = new Lexer(sourceProgram);
             scan();
         } catch (Exception e) {
             System.out.println("********exception*******" + e.toString());
@@ -79,8 +79,8 @@ public class Parser {
         };
     }
 
-    public Lexer getLex() {
-        return lex;
+    public Lexer getLexer() {
+        return lexer;
     }
 
     /**
@@ -111,8 +111,8 @@ public class Parser {
         // note that rProgram actually returns a ProgramTree; we use the 
         // principle of substitutability to indicate it returns an AST
         AST t = new ProgramTree();
-        expect(Tokens.Program);
-        t.addKid(rBlock());
+        expect( Tokens.Program );
+        t.addChild( rBlock() );
         return t;
     }
 
@@ -127,15 +127,15 @@ public class Parser {
      * left brace isn't found
      */
     public AST rBlock() throws SyntaxError {
-        expect(Tokens.LeftBrace);
+        expect( Tokens.LeftBrace );
         AST t = new BlockTree();
-        while (startingDecl()) {  // get decls
-                t.addKid(rDecl());
+        while ( startingDecl() ) {  // get decls
+                t.addChild( rDecl() );
         }
-        while (startingStatement()) {  // get statements
-                t.addKid(rStatement());
+        while ( startingStatement() ) {  // get statements
+                t.addChild( rStatement() );
         }
-        expect(Tokens.RightBrace);
+        expect( Tokens.RightBrace );
         return t;
     }
 
@@ -168,12 +168,12 @@ public class Parser {
         t = rType();
         t1 = rName();
         if (isNextTok(Tokens.LeftParen)) { // function
-            t = (new FunctionDeclTree()).addKid(t).addKid(t1);
-            t.addKid(rFunHead());
-            t.addKid(rBlock());
+            t = (new FunctionDeclTree()).addChild(t).addChild(t1);
+            t.addChild(rFunHead());
+            t.addChild(rBlock());
             return t;
         }
-        t = (new DeclTree()).addKid(t).addKid(t1);
+        t = (new DeclTree()).addChild(t).addChild(t1);
         return t;
     }
 
@@ -213,7 +213,7 @@ public class Parser {
         expect(Tokens.LeftParen);
         if (!isNextTok(Tokens.RightParen)) {
             do {
-                t.addKid(rDecl());
+                t.addChild(rDecl());
                 if (isNextTok(Tokens.Comma)) {
                     scan();
                 } else {
@@ -240,33 +240,33 @@ public class Parser {
         if (isNextTok(Tokens.If)) {
             scan();
             t = new IfTree();
-            t.addKid(rExpr());
+            t.addChild(rExpr());
             expect(Tokens.Then);
-            t.addKid(rBlock());
+            t.addChild(rBlock());
             expect(Tokens.Else);
-            t.addKid(rBlock());
+            t.addChild(rBlock());
             return t;
         }
         if (isNextTok(Tokens.While)) {
             scan();
             t = new WhileTree();
-            t.addKid(rExpr());
-            t.addKid(rBlock());
+            t.addChild(rExpr());
+            t.addChild(rBlock());
             return t;
         }
         if (isNextTok(Tokens.Return)) {
             scan();
             t = new ReturnTree();
-            t.addKid(rExpr());
+            t.addChild(rExpr());
             return t;
         }
         if (isNextTok(Tokens.LeftBrace)) {
             return rBlock();
         }
         t = rName();
-        t = (new AssignTree()).addKid(t);
+        t = (new AssignTree()).addChild(t);
         expect(Tokens.Assign);
-        t.addKid(rExpr());
+        t.addChild(rExpr());
         return t;
     }
 
@@ -284,8 +284,8 @@ public class Parser {
         if (t == null) {
             return kid;
         }
-        t.addKid(kid);
-        t.addKid(rSimpleExpr());
+        t.addChild(kid);
+        t.addChild(rSimpleExpr());
         return t;
     }
 
@@ -303,8 +303,8 @@ public class Parser {
     public AST rSimpleExpr() throws SyntaxError {
         AST t, kid = rTerm();
         while ((t = getAddOperTree()) != null) {
-            t.addKid(kid);
-            t.addKid(rTerm());
+            t.addChild(kid);
+            t.addChild(rTerm());
             kid = t;
         }
         return kid;
@@ -324,8 +324,8 @@ public class Parser {
     public AST rTerm() throws SyntaxError {
         AST t, kid = rFactor();
         while ((t = getMultOperTree()) != null) {
-            t.addKid(kid);
-            t.addKid(rFactor());
+            t.addChild(kid);
+            t.addChild(rFactor());
             kid = t;
         }
         return kid;
@@ -359,10 +359,10 @@ public class Parser {
             return t;
         }
         scan();     // -> name '(' (e list ',')? ) ==> call
-        t = (new CallTree()).addKid(t);
+        t = (new CallTree()).addChild(t);
         if (!isNextTok(Tokens.RightParen)) {
             do {
-                t.addKid(rExpr());
+                t.addChild(rExpr());
                 if (isNextTok(Tokens.Comma)) {
                     scan();
                 } else {
@@ -426,57 +426,38 @@ public class Parser {
         }
     }
 
-    private boolean isNextTok(Tokens kind) {
-        if ((currentToken == null) || (currentToken.getKind() != kind)) {
+    private boolean isNextTok( Tokens kind ) {
+        if ( (currentToken == null ) || ( currentToken.getKind() != kind ) ) {
             return false;
         }
         return true;
     }
 
-    private void expect(Tokens kind) throws SyntaxError {
-        if (isNextTok(kind)) {
+    private void expect( Tokens kind ) throws SyntaxError {
+        if ( isNextTok( kind ) ) {
             scan();
             return;
         }
-        throw new SyntaxError(currentToken, kind);
+        throw new SyntaxError( currentToken, kind );
     }
 
     private void scan() {
-        currentToken = lex.nextToken();
+        currentToken = lexer.nextToken();
         if (currentToken != null) {
             currentToken.print();   // debug printout
         }
         return;
     }
-}
 
-class SyntaxError extends Exception {
+    public static void main( String args[] ) {
+        String sourceFile = args[0];
+        Parser p;
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
-    /**
-     *
-     */
-    private Token tokenFound;
-    private Tokens kindExpected;
-
-    /**
-     * record the syntax error just encountered
-     *
-     * @param tokenFound is the token just found by the parser
-     * @param kindExpected is the token we expected to find based on the current
-     * context
-     */
-    public SyntaxError(Token tokenFound, Tokens kindExpected) {
-        this.tokenFound = tokenFound;
-        this.kindExpected = kindExpected;
+        try {
+            p = new Parser( sourceFile );
+            p.execute();
+        } catch ( Exception e ) {
+        }
     }
 
-    void print() {
-        System.out.println("Expected: "
-                + kindExpected);
-        return;
-    }
 }

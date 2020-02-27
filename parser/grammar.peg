@@ -1,0 +1,40 @@
+  PROGRAM -> �program� BLOCK ==> program
+
+  BLOCK -> �{� DS�}�  ==> block
+
+  D -> TYPE NAME                    ==> decl
+    -> TYPE NAME FUNHEAD BLOCK      ==> functionDecl
+
+  TYPE  ->  �int�
+        ->  �boolean�
+
+  FUNHEAD  -> '(' (D list ',')? ')'  ==> formals<br>
+
+  S -> �if� E �then� BLOCK �else� BLOCK  ==> if
+    -> �while� E BLOCK               ==> while
+    -> �return� E                    ==> return
+    -> BLOCK
+    -> NAME �=� E                    ==> assign<br>
+
+  E -> SE
+    -> SE �==� SE   ==> =
+    -> SE �!=� SE   ==> !=
+    -> SE �<�  SE   ==> <
+    -> SE �<=� SE   ==> <=
+
+  SE  ->  T
+      ->  SE �+� T  ==> +
+      ->  SE �-� T  ==> -
+      ->  SE �|� T  ==> or
+
+  T  -> F
+     -> T �F  ==>
+     -> T �/� F  ==> /
+     -> T �&� F  ==> and
+
+  F  -> �(� E �)�
+     -> NAME
+     -> <int>
+     -> NAME '(' (E list ',')? ')' ==> call<br>
+
+  NAME  -> <id>

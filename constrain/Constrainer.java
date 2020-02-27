@@ -105,32 +105,32 @@ public class Constrainer extends ASTVisitor {
  *  as any other AST
 */
     private void buildIntrinsicTrees() {
-        Lexer lex = parser.getLex();
-        trueTree = new IdTree(lex.newIdToken("true",-1,-1));
-        falseTree = new IdTree(lex.newIdToken("false",-1,-1));
-        readId = new IdTree(lex.newIdToken("read",-1,-1));
-        writeId = new IdTree(lex.newIdToken("write",-1,-1));
-        boolTree = (new DeclTree()).addKid(new BoolTypeTree()).
-                 addKid(new IdTree(lex.newIdToken("<<bool>>",-1,-1)));
-        decorate(boolTree.getKid(2),boolTree);  
-        intTree = (new DeclTree()).addKid(new IntTypeTree()).
-                 addKid(new IdTree(lex.newIdToken("<<int>>",-1,-1)));
-        decorate(intTree.getKid(2),intTree);  
+        Lexer lex = parser.getLexer();
+        trueTree = new IdTree(lex.newIdToken("true",-1,-1, -1));
+        falseTree = new IdTree(lex.newIdToken("false",-1,-1, -1));
+        readId = new IdTree(lex.newIdToken("read",-1,-1, -1));
+        writeId = new IdTree(lex.newIdToken("write",-1,-1, -1));
+        boolTree = (new DeclTree()).addChild(new BoolTypeTree()).
+          addChild(new IdTree(lex.newIdToken("<<bool>>",-1,-1, -1)));
+        decorate(boolTree.getChild(2),boolTree);
+        intTree = (new DeclTree()).addChild(new IntTypeTree()).
+          addChild(new IdTree(lex.newIdToken("<<int>>",-1,-1, -1)));
+        decorate(intTree.getChild(2),intTree);
         // to facilitate type checking; this ensures int decls and id decls
         // have the same structure
         
         // read tree takes no parms and returns an int
-        readTree = (new FunctionDeclTree()).addKid(new IntTypeTree()).
-                       addKid(readId).addKid(new FormalsTree()).
-                       addKid(new BlockTree());
+        readTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
+          addChild(readId).addChild(new FormalsTree()).
+          addChild(new BlockTree());
         
         // write tree takes one int parm and returns that value
-        writeTree = (new FunctionDeclTree()).addKid(new IntTypeTree()).
-                       addKid(writeId);
-        AST decl = (new DeclTree()).addKid(new IntTypeTree()).
-                       addKid(new IdTree(lex.newIdToken("dummyFormal",-1,-1)));
-        AST formals = (new FormalsTree()).addKid(decl);
-        writeTree.addKid(formals).addKid(new BlockTree());
+        writeTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
+          addChild(writeId);
+        AST decl = (new DeclTree()).addChild(new IntTypeTree()).
+          addChild(new IdTree(lex.newIdToken("dummyFormal",-1,-1, -1)));
+        AST formals = (new FormalsTree()).addChild(decl);
+        writeTree.addChild(formals).addChild(new BlockTree());
         writeTree.accept(this);
         readTree.accept(this);
     }
@@ -141,7 +141,7 @@ public class Constrainer extends ASTVisitor {
     public Object visitProgramTree(AST t) {
         buildIntrinsicTrees();
         this.t = t;
-        t.getKid(1).accept(this);
+        t.getChild(1).accept(this);
         return null;
     }
 
@@ -162,10 +162,10 @@ public class Constrainer extends ASTVisitor {
  *  in the function scope and <li>constrain the body of the function</ol>
 */
     public Object visitFunctionDeclTree(AST t) {
-        AST fname = t.getKid(2),
-            returnType = t.getKid(1),
-            formalsTree = t.getKid(3),
-            bodyTree = t.getKid(4);
+        AST fname = t.getChild(2),
+            returnType = t.getChild(1),
+            formalsTree = t.getChild(3),
+            bodyTree = t.getChild(4);
         functions.push(t);
         enter(fname,t);  // enter function name in CURRENT scope
         decorate(returnType,getType(returnType));
@@ -184,16 +184,16 @@ public class Constrainer extends ASTVisitor {
 */
     public Object visitCallTree(AST t) {
         AST fct,
-            fname = t.getKid(1),
+            fname = t.getChild(1),
             fctType;
         visitKids(t);
         fct = lookup(fname);
         if (fct.getClass() != FunctionDeclTree.class) {
             constraintError(ConstrainerErrors.CallingNonFunction);
         }
-        fctType = decoration(fct.getKid(1));
+        fctType = decoration(fct.getChild(1));
         decorate(t,fctType);
-        decorate(t.getKid(1),fct);
+        decorate(t.getChild(1),fct);
         // now check that the number/types of actuals match the
         // number/types of formals
         checkArgDecls(t,fct);
@@ -202,16 +202,16 @@ public class Constrainer extends ASTVisitor {
     
     private void checkArgDecls(AST caller, AST fct) {
         // check number and types of args/formals match
-        AST formals = fct.getKid(3);
-        Iterator<AST> actualKids = caller.getKids().iterator(),
-                    formalKids = formals.getKids().iterator();
+        AST formals = fct.getChild(3);
+        Iterator<AST> actualKids = caller.getChildren().iterator(),
+                    formalKids = formals.getChildren().iterator();
         actualKids.next();  // skip past fct name
         for (; actualKids.hasNext();) {
             try {
                 AST actualDecl = decoration(actualKids.next()),
                     formalDecl = formalKids.next();
-                if (decoration(actualDecl.getKid(2)) != 
-                    decoration(formalDecl.getKid(2))) {
+                if (decoration(actualDecl.getChild(2)) !=
+                    decoration(formalDecl.getChild(2))) {
                     constraintError(ConstrainerErrors.ActualFormalTypeMismatch);
                 }
             } catch (Exception e) {
@@ -231,9 +231,9 @@ public class Constrainer extends ASTVisitor {
  *  retrieve the information in this tree</ol>
 */
     public Object visitDeclTree(AST t) {
-        AST idTree = t.getKid(2);
+        AST idTree = t.getChild(2);
         enter(idTree,t);
-        AST typeTree = getType(t.getKid(1));
+        AST typeTree = getType(t.getChild(1));
         decorate(idTree,typeTree);
         return null; }
         
@@ -242,19 +242,19 @@ public class Constrainer extends ASTVisitor {
  *  check that the first kid is an expression that is a boolean type
 */
     public Object visitIfTree(AST t) {
-        if ( t.getKid(1).accept(this) != boolTree) {
+        if ( t.getChild(1).accept(this) != boolTree) {
             constraintError(ConstrainerErrors.BadConditional);
         }
-        t.getKid(2).accept(this);
-        t.getKid(3).accept(this);
+        t.getChild(2).accept(this);
+        t.getChild(3).accept(this);
         return null;
     }
         
     public Object visitWhileTree(AST t) {
-        if ( t.getKid(1).accept(this) != boolTree) {
+        if ( t.getChild(1).accept(this) != boolTree) {
             constraintError(ConstrainerErrors.BadConditional);
         }
-        t.getKid(2).accept(this);
+        t.getChild(2).accept(this);
         return null;
     }
         
@@ -269,8 +269,8 @@ public class Constrainer extends ASTVisitor {
         }
         AST currentFunction = (functions.peek());
         decorate(t,currentFunction);
-        AST returnType = decoration(currentFunction.getKid(1));
-        if ( (t.getKid(1).accept(this)) != returnType) {
+        AST returnType = decoration(currentFunction.getChild(1));
+        if ( (t.getChild(1).accept(this)) != returnType) {
             constraintError(ConstrainerErrors.BadReturnExpr);
         }
         return null;
@@ -283,15 +283,15 @@ public class Constrainer extends ASTVisitor {
  *  to the intrinsic type tree describing the type of the expression
 */
     public Object visitAssignTree(AST t) {
-        AST idTree = t.getKid(1),
+        AST idTree = t.getChild(1),
             idDecl = lookup(idTree),
             typeTree;
         decorate(idTree,idDecl);
-        typeTree = decoration(idDecl.getKid(2));
+        typeTree = decoration(idDecl.getChild(2));
         
         // now check that the types of the expr and id are the same
         // visit the expr tree and get back its type
-        if ( (t.getKid(2).accept(this)) != typeTree) {
+        if ( (t.getChild(2).accept(this)) != typeTree) {
             constraintError(ConstrainerErrors.BadAssignmentType);
         }
         return null;
@@ -305,12 +305,12 @@ public class Constrainer extends ASTVisitor {
     public Object visitIdTree(AST t) {
         AST decl = lookup(t);
         decorate(t,decl);
-        return decoration(decl.getKid(2));
+        return decoration(decl.getChild(2));
     }
         
     public Object visitRelOpTree(AST t) {
-        AST leftOp = t.getKid(1),
-            rightOp = t.getKid(2);
+        AST leftOp = t.getChild(1),
+            rightOp = t.getChild(2);
         if ( (AST)(leftOp.accept(this)) != (AST)(rightOp.accept(this)) ) {
             constraintError(ConstrainerErrors.TypeMismatchInExpr);
         }
@@ -326,8 +326,8 @@ public class Constrainer extends ASTVisitor {
  *  @return the type of the tree
 */
     public Object visitAddOpTree(AST t) {
-        AST leftOpType = (AST)(t.getKid(1).accept(this)),
-            rightOpType = (AST)(t.getKid(2).accept(this));
+        AST leftOpType = (AST)(t.getChild(1).accept(this)),
+            rightOpType = (AST)(t.getChild(2).accept(this));
         if (leftOpType != rightOpType) {
             constraintError(ConstrainerErrors.TypeMismatchInExpr);
         }

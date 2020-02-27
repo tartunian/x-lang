@@ -15,7 +15,7 @@ import ast.*;
 public abstract class ASTVisitor {
 
     public void visitKids(AST t) {
-        for (AST kid : t.getKids()) {
+        for (AST kid : t.getChildren()) {
             kid.accept(this);
         }
         return;

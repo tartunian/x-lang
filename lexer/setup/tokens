@@ -1,9 +1,17 @@
 Program program
 Int int
 BOOLean boolean
+Char char
+CharLit <char>
+StringType string
+StringLit <string>
 If if
 Then then
 Else else
+Switch switch
+Case case
+Colon :
+Default default
 While while
 Function function
 Return return
@@ -17,6 +25,8 @@ Comma ,
 Assign =
 Equal ==
 NotEqual !=
+Greater >
+GreaterEqual >=
 Less <
 LessEqual <=
 Plus +
@@ -26,3 +36,4 @@ And &
 Multiply *
 Divide /
 Comment //
+EndProgram XD

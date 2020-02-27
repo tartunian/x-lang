@@ -18,6 +18,14 @@ public class Symbol {
   // symbols contains all strings in the source program
   private static java.util.HashMap<String,Symbol> symbols = new java.util.HashMap<String,Symbol>();
 
+  public static boolean isKeyword( String s ) {
+    return symbols.containsKey( s );
+  }
+
+  public static Symbol getSymbolForKeywordString( String keyword ) {
+    return symbols.get( keyword );
+  }
+
   public String toString() {
     return name;
   }
@@ -26,11 +34,12 @@ public class Symbol {
     return kind;
   }
 
+
   /**
    * Return the unique symbol associated with a string.
    * Repeated calls to <tt>symbol("abc")</tt> will return the same Symbol.
    */
-  public static Symbol symbol( String newTokenString, Tokens kind ) {
+  public static Symbol put(String newTokenString, Tokens kind ) {
     Symbol s = symbols.get( newTokenString );
     if( s == null ) {
       if( kind == Tokens.BogusToken ) {

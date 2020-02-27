@@ -91,7 +91,7 @@ public class TokenSetup {
       String symType = "Tokens." + type;
 
       table.println(
-        "     tokens.put(" + symType  + ", Symbol.symbol(\"" +
+        "     tokens.put(" + symType  + ", Symbol.put(\"" +
         value + "\"," + symType + "));"
       );
 
@@ -101,6 +101,8 @@ public class TokenSetup {
         symbols.print( "," + type );
       }
     }
+
+    symbols.print( ",Invalid" );
 
     table.println( "   }" );
     table.println( "}" );

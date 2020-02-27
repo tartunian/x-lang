@@ -1,5 +1,9 @@
 package lexer;
 
+import util.ErrorHandler;
+
+import java.io.IOException;
+
 /**
  *  The Lexer class is responsible for scanning the source file
  *  which is a stream of characters and returning a stream of
@@ -12,7 +16,7 @@ package lexer;
 public class Lexer {
   private boolean atEOF = false;
   // next character to process
-  private char ch;
+  private char currentCharacter;
   private SourceReader source;
 
   // positions in line of current token
@@ -26,7 +30,7 @@ public class Lexer {
     // init token table
     new TokenType();
     source = new SourceReader( sourceFile );
-    ch = source.read();
+    currentCharacter = source.read();
   }
 
   /**
@@ -37,11 +41,12 @@ public class Lexer {
    *  @param endPosition is the column in the source file where the token ends
    *  @return the Token; either an id or one for the reserved words
    */
-  public Token newIdToken( String id, int startPosition, int endPosition ) {
+  public Token newIdToken( String id, int lineNumber, int startPosition, int endPosition ) {
     return new Token(
+      lineNumber,
       startPosition,
       endPosition,
-      Symbol.symbol( id, Tokens.Identifier )
+      Symbol.put( id, Tokens.Identifier )
     );
   }
 
@@ -56,12 +61,20 @@ public class Lexer {
    *  @param endPosition is the column in the source file where the int ends
    *  @return the int Token
    */
-  public Token newNumberToken( String number, int startPosition, int endPosition) {
+  public Token newNumberToken( String number, int lineNumber, int startPosition, int endPosition) {
     return new Token(
+      lineNumber,
       startPosition,
       endPosition,
-      Symbol.symbol( number, Tokens.INTeger )
+      Symbol.put( number, Tokens.INTeger )
     );
+  }
+
+  private void consumeComments() throws IOException {
+    int startingLine = source.getLineNumber();
+    do {
+      currentCharacter = source.read();
+    } while ( source.getLineNumber() == startingLine );
   }
 
   /**
@@ -72,150 +85,189 @@ public class Lexer {
    *  @param endPosition is the column in the source file where the token ends
    *  @return the Token just found
    */
-  public Token makeToken( String s, int startPosition, int endPosition ) {
-    // filter comments
-    if( s.equals("//") ) {
-      try {
-        int oldLine = source.getLineno();
-
-        do {
-          ch = source.read();
-        } while( oldLine == source.getLineno() );
-      } catch (Exception e) {
-        atEOF = true;
-      }
-
-      return nextToken();
-    }
+  public Token makeToken( String s, int lineNumber, int startPosition, int endPosition ) {
 
     // ensure it's a valid token
-    Symbol sym = Symbol.symbol( s, Tokens.BogusToken );
+    Symbol symbol = Symbol.put( s, Tokens.BogusToken );
 
-    if( sym == null ) {
-      System.out.println( "******** illegal character: " + s );
+    if( symbol == null ) {
+      //System.out.println( "******** illegal character: " + s );
+      ErrorHandler.getInstance().logError("InvalidCharacter", lineNumber, startPosition, s);
       atEOF = true;
       return nextToken();
     }
 
-    return new Token( startPosition, endPosition, sym );
+    return new Token( lineNumber, startPosition, endPosition, symbol );
+  }
+
+  private void consumeWhiteSpace() throws IOException {
+    while( Character.isWhitespace( currentCharacter )) {
+      currentCharacter = source.read();
+    }
+    startPosition = source.getPosition();
+    endPosition = startPosition - 1;
+  }
+
+  private Token getIdentifierToken() throws IOException {
+    String id = "";
+
+    do {
+      endPosition++;
+      id += currentCharacter;
+      currentCharacter = source.read();
+    } while ( Character.isJavaIdentifierPart( currentCharacter ) );
+
+    return newIdToken( id, source.getLineNumber(), startPosition, endPosition );
+  }
+
+  private Token getKeywordToken() throws IOException {
+    String word = "";
+
+    do {
+      word += currentCharacter;
+      currentCharacter = source.read();
+      endPosition++;
+    } while ( Character.isAlphabetic( currentCharacter ) );
+
+    Symbol s = Symbol.getSymbolForKeywordString( word );
+    return new Token(source.getLineNumber(), startPosition, endPosition, s);
+  }
+
+  private Token getNumberToken() throws IOException {
+    String number = "";
+
+    do {
+      endPosition++;
+      number += currentCharacter;
+      currentCharacter = source.read();
+    } while( Character.isDigit( currentCharacter ) );
+
+    return newNumberToken( number, source.getLineNumber(), startPosition, endPosition );
+  }
+
+  private Token getStringLiteralToken() throws IOException {
+    String word = "";
+
+    do {
+      word += currentCharacter;
+      currentCharacter = source.read();
+      endPosition++;
+    } while ( currentCharacter != '\"' );
+
+    currentCharacter = source.read();
+    endPosition++;
+    word += "\"";
+
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( word, Tokens.StringLit ) );
+  }
+
+  private Token getCharacterLiteralToken() throws IOException {
+    String c = "";
+
+    c += currentCharacter;
+
+    currentCharacter = source.read();
+    endPosition++;
+
+    c += currentCharacter;
+
+    currentCharacter = source.read();
+    endPosition++;
+
+    if( currentCharacter != '\'' ) {
+      System.out.println( String.format( "******** illegal character: line: %-8d column: %-8d %-2s", source.getLineNumber(), startPosition, currentCharacter ) );
+      return null;
+    }
+
+    currentCharacter = source.read();
+    endPosition++;
+
+    c += '\'';
+
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( c, Tokens.CharLit ) );
+  }
+
+  private Token getTwoCharToken() throws IOException {
+    char firstCharacter = currentCharacter;
+    String twoCharToken = Character.toString( firstCharacter );
+    endPosition++;
+    currentCharacter = source.read();
+    twoCharToken += currentCharacter;
+
+    if ( twoCharToken == "//" ) {
+      consumeComments();
+    }
+
+    Symbol sym = Symbol.put( twoCharToken, Tokens.BogusToken );
+    if ( sym == null ) {
+      return makeToken( Character.toString( firstCharacter ), source.getLineNumber(), startPosition, endPosition );
+    }
+
+    endPosition++;
+    currentCharacter = source.read();
+
+    return makeToken( twoCharToken, source.getLineNumber(), startPosition, endPosition );
+  }
+
+  private Token getEndOfFileToken() {
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put("XD", Tokens.EndProgram ) );
   }
 
   /**
    *  @return the next Token found in the source file
    */
   public Token nextToken() {
-    // ch is always the next char to process
-    if( atEOF ) {
-      if( source != null ) {
-        source.close();
-        source = null;
-      }
-
-      return null;
-    }
 
     try {
-      // scan past whitespace
-      while( Character.isWhitespace( ch )) {
-        ch = source.read();
+      consumeWhiteSpace();
+      if ( Character.isJavaIdentifierStart( currentCharacter ) ) {
+        return getIdentifierToken();
+      } else if ( Character.isLetter( currentCharacter ) ) {
+        return getKeywordToken();
+      } else if ( currentCharacter == '\"') {
+        return getStringLiteralToken();
+      } else if ( currentCharacter == '\'' ) {
+        return getCharacterLiteralToken();
+      } else if ( Character.isDigit( currentCharacter ) ) {
+        return getNumberToken();
+      } else {
+        return getTwoCharToken();
       }
-    } catch( Exception e ) {
-      atEOF = true;
-      return nextToken();
-    }
+    } catch ( IOException e ) { };
 
-    startPosition = source.getPosition();
-    endPosition = startPosition - 1;
-
-    if( Character.isJavaIdentifierStart( ch )) {
-      // return tokens for ids and reserved words
-      String id = "";
-
-      try {
-        do {
-          endPosition++;
-          id += ch;
-          ch = source.read();
-        } while( Character.isJavaIdentifierPart( ch ));
-      } catch( Exception e ) {
-        atEOF = true;
-      }
-
-      return newIdToken( id, startPosition, endPosition );
-    }
-
-    if( Character.isDigit( ch )) {
-      // return number tokens
-      String number = "";
-
-      try {
-        do {
-          endPosition++;
-          number += ch;
-          ch = source.read();
-        } while( Character.isDigit( ch ));
-      } catch( Exception e ) {
-        atEOF = true;
-      }
-
-      return newNumberToken( number, startPosition, endPosition );
-    }
-
-    // At this point the only tokens to check for are one or two
-    // characters; we must also check for comments that begin with
-    // 2 slashes
-    String charOld = "" + ch;
-    String op = charOld;
-    Symbol sym;
-    try {
-      endPosition++;
-      ch = source.read();
-      op += ch;
-
-      // check if valid 2 char operator; if it's not in the symbol
-      // table then don't insert it since we really have a one char
-      // token
-      sym = Symbol.symbol( op, Tokens.BogusToken );
-      if (sym == null) {
-        // it must be a one char token
-        return makeToken( charOld, startPosition, endPosition );
-      }
-
-      endPosition++;
-      ch = source.read();
-
-      return makeToken( op, startPosition, endPosition );
-    } catch( Exception e ) { /* no-op */ }
-
-    atEOF = true;
-    if( startPosition == endPosition ) {
-      op = charOld;
-    }
-
-    return makeToken( op, startPosition, endPosition );
+    return getEndOfFileToken();
   }
 
-/*
-  public static void main(String args[]) {
-    Token token;
+  /*
+   * Command-line entry point
+   */
+  public static void main( String args[] ) {
+
+    String sourceFile = args[0];
+    Lexer lexer;
 
     try {
-      Lexer lex = new Lexer( "simple.x" );
+      lexer = new Lexer( sourceFile );
+      Token token;
 
-      while( true ) {
-        token = lex.nextToken();
-
-        String p = "L: " + token.getLeftPosition() +
-          " R: " + token.getRightPosition() + "  " +
-          TokenType.tokens.get(token.getKind()) + " ";
-
-        if ((token.getKind() == Tokens.Identifier) || (token.getKind() == Tokens.INTeger)) {
-          p += token.toString();
-        }
-
-        System.out.println( p + ": " + lex.source.getLineno() );
+      while( ( token = lexer.nextToken() ).getKind() != Tokens.EndProgram ) {
+        System.out.println( token );
       }
-    } catch (Exception e) {}
+
+      System.out.println();
+
+      // Reset the SourceReader to the beginning of the source file.
+      lexer.source.reset();
+
+      // Print out the full source code.
+      String sourceCodeLine;
+      while( ( sourceCodeLine = lexer.source.readLine() ) != null ) {
+        String s = lexer.source.getLineNumber() + ": " + sourceCodeLine;
+        System.out.println( s );
+      }
+
+    } catch (Exception e) { System.out.println( e ); }
+
   }
-*/
+
 }
