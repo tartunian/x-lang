@@ -18,12 +18,6 @@ import java.util.*;
  *  tree
 */
 public class Constrainer extends ASTVisitor {
-	public enum ConstrainerErrors {
-	    BadAssignmentType, CallingNonFunction, ActualFormalTypeMismatch, NumberActualsFormalsDiffer, TypeMismatchInExpr,
-	    BooleanExprExpected, BadConditional, ReturnNotInFunction, BadReturnExpr
-	}
-
-    
 
     private AST t;           // the AST to constrain
     private Table symtab = new Table();
@@ -49,8 +43,8 @@ public class Constrainer extends ASTVisitor {
  *  source program trees to ensure consisten processing of 
  *  functions, etc.
 */
-    public static AST readTree, writeTree, intTree, boolTree,
-               falseTree, trueTree, readId, writeId;
+    public static AST ReadTree, WriteTree, IntTree, BoolTree,
+        FalseTree, TrueTree, ReadID, WriteID;
                
     public Constrainer(AST t, Parser parser) {
         this.t = t;
@@ -65,19 +59,15 @@ public class Constrainer extends ASTVisitor {
 /**
  *  t is an IdTree; retrieve the pointer to its declaration
 */
-    private AST lookup(AST t) {  
-        return (AST)(symtab.get( ((IdTree)t).getSymbol()));
+    private AST lookup( AST t ) throws ConstraintException {
+        return ( AST )( symtab.get( ( ( IdTree ) t ).getSymbol() ) );
     }
 
 /**
  *  Decorate the IdTree with the given decoration - its decl tree
 */
-    private void enter(AST t, AST decoration) {
-/*
-        System.out.println("enter: "+((IdTree)t).getSymbol().toString()
-              + ": " + decoration.getNodeNum());
-*/
-        symtab.put( ((IdTree)t).getSymbol(), decoration);
+    private void enter( AST t, AST decoration ) {
+        symtab.put( ( ( IdTree ) t ).getSymbol(), decoration );
     }
 
 /**
@@ -85,18 +75,18 @@ public class Constrainer extends ASTVisitor {
  *  @param t is the type tree
  *  @return the intrinsic tree corresponding to the type of t
 */
-    private AST getType(AST t) {
-        return (t.getClass() == IntTypeTree.class)? intTree: boolTree;
+    private AST getType( AST t ) {
+        return ( t.getClass() == IntTypeTree.class ) ? IntTree : BoolTree;
     }
 
-    public void decorate(AST t, AST decoration) {
-        t.setDecoration(decoration);
+    public void decorate( AST t, AST decoration ) {
+        t.setDecoration( decoration );
     }
 
 /**
  *  @return the decoration of the tree
 */
-    public AST decoration(AST t) {
+    public AST decoration( AST t ) {
         return t.getDecoration();
     }
     
@@ -106,33 +96,33 @@ public class Constrainer extends ASTVisitor {
 */
     private void buildIntrinsicTrees() {
         Lexer lex = parser.getLexer();
-        trueTree = new IdTree(lex.newIdToken("true",-1,-1, -1));
-        falseTree = new IdTree(lex.newIdToken("false",-1,-1, -1));
-        readId = new IdTree(lex.newIdToken("read",-1,-1, -1));
-        writeId = new IdTree(lex.newIdToken("write",-1,-1, -1));
-        boolTree = (new DeclTree()).addChild(new BoolTypeTree()).
-          addChild(new IdTree(lex.newIdToken("<<bool>>",-1,-1, -1)));
-        decorate(boolTree.getChild(2),boolTree);
-        intTree = (new DeclTree()).addChild(new IntTypeTree()).
-          addChild(new IdTree(lex.newIdToken("<<int>>",-1,-1, -1)));
-        decorate(intTree.getChild(2),intTree);
+        TrueTree = new IdTree( lex.newIdToken( "true",-1,-1, -1 ) );
+        FalseTree = new IdTree(lex.newIdToken( "false",-1,-1, -1 ) );
+        ReadID = new IdTree( lex.newIdToken( "read",-1,-1, -1 ) );
+        WriteID = new IdTree( lex.newIdToken( "write",-1,-1, -1 ) );
+        BoolTree = ( new DeclTree() ).addChild( new BoolTypeTree() ).
+          addChild( new IdTree( lex.newIdToken( "<<bool>>",-1,-1, -1 ) ) );
+        decorate( BoolTree.getChild( 2 ), BoolTree );
+        IntTree = ( new DeclTree() ).addChild( new IntTypeTree() ).
+          addChild( new IdTree( lex.newIdToken( "<<int>>",-1,-1, -1 ) ) );
+        decorate( IntTree.getChild( 2 ), IntTree );
         // to facilitate type checking; this ensures int decls and id decls
         // have the same structure
         
         // read tree takes no parms and returns an int
-        readTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
-          addChild(readId).addChild(new FormalsTree()).
+        ReadTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
+          addChild(ReadID).addChild(new FormalsTree()).
           addChild(new BlockTree());
         
         // write tree takes one int parm and returns that value
-        writeTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
-          addChild(writeId);
+        WriteTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
+          addChild(WriteID);
         AST decl = (new DeclTree()).addChild(new IntTypeTree()).
           addChild(new IdTree(lex.newIdToken("dummyFormal",-1,-1, -1)));
         AST formals = (new FormalsTree()).addChild(decl);
-        writeTree.addChild(formals).addChild(new BlockTree());
-        writeTree.accept(this);
-        readTree.accept(this);
+        WriteTree.addChild(formals).addChild(new BlockTree());
+        WriteTree.accept(this);
+        ReadTree.accept(this);
     }
     
 /**
@@ -152,7 +142,7 @@ public class Constrainer extends ASTVisitor {
 */
     public Object visitBlockTree(AST t) {
         symtab.beginScope();
-        visitKids(t);
+        visitChildren(t);
         symtab.endScope();
         return null; }
         
@@ -170,7 +160,7 @@ public class Constrainer extends ASTVisitor {
         enter(fname,t);  // enter function name in CURRENT scope
         decorate(returnType,getType(returnType));
         symtab.beginScope();  // new scope for formals and body
-        visitKids(formalsTree); // all formal names go in new scope
+        visitChildren(formalsTree); // all formal names go in new scope
         bodyTree.accept(this);
         symtab.endScope();
         functions.pop();
@@ -182,14 +172,14 @@ public class Constrainer extends ASTVisitor {
  *  check that the number and types of the actuals match the
  *  number and type of the formals
 */
-    public Object visitCallTree(AST t) {
+    public Object visitCallTree(AST t) throws ConstraintException {
         AST fct,
             fname = t.getChild(1),
             fctType;
-        visitKids(t);
+        visitChildren(t);
         fct = lookup(fname);
         if (fct.getClass() != FunctionDeclTree.class) {
-            constraintError(ConstrainerErrors.CallingNonFunction);
+            throw new ConstraintException( ConstraintExceptionType.CallingNonFunction );
         }
         fctType = decoration(fct.getChild(1));
         decorate(t,fctType);
@@ -200,26 +190,26 @@ public class Constrainer extends ASTVisitor {
         return fctType;
     }
     
-    private void checkArgDecls(AST caller, AST fct) {
+    private void checkArgDecls(AST caller, AST fct) throws ConstraintException {
         // check number and types of args/formals match
         AST formals = fct.getChild(3);
-        Iterator<AST> actualKids = caller.getChildren().iterator(),
-                    formalKids = formals.getChildren().iterator();
-        actualKids.next();  // skip past fct name
-        for (; actualKids.hasNext();) {
+        Iterator<AST> actualChildren = caller.getChildren().iterator(),
+                    formalChildren = formals.getChildren().iterator();
+        actualChildren.next();  // skip past fct name
+        for (; actualChildren.hasNext();) {
             try {
-                AST actualDecl = decoration(actualKids.next()),
-                    formalDecl = formalKids.next();
+                AST actualDecl = decoration(actualChildren.next()),
+                    formalDecl = formalChildren.next();
                 if (decoration(actualDecl.getChild(2)) !=
                     decoration(formalDecl.getChild(2))) {
-                    constraintError(ConstrainerErrors.ActualFormalTypeMismatch);
+                    throw new ConstraintException( ConstraintExceptionType.ActualFormalTypeMismatch )
                 }
             } catch (Exception e) {
-                constraintError(ConstrainerErrors.NumberActualsFormalsDiffer);
+                throw new ConstraintException( ConstraintExceptionType.NumberActualsFormalsDiffer );
             }
         }
-        if (formalKids.hasNext()) {
-            constraintError(ConstrainerErrors.NumberActualsFormalsDiffer);
+        if (formalChildren.hasNext()) {
+            throw new ConstraintException( ConstraintExceptionType.NumberActualsFormalsDiffer );
         }
         return;
     }
@@ -241,18 +231,18 @@ public class Constrainer extends ASTVisitor {
  *  Constrain the <i>If</i> tree:<br>
  *  check that the first kid is an expression that is a boolean type
 */
-    public Object visitIfTree(AST t) {
-        if ( t.getChild(1).accept(this) != boolTree) {
-            constraintError(ConstrainerErrors.BadConditional);
+    public Object visitIfTree(AST t) throws ConstraintException {
+        if ( t.getChild(1).accept(this) != BoolTree) {
+            throw new ConstraintException( ConstraintExceptionType.BadConditional );
         }
         t.getChild(2).accept(this);
         t.getChild(3).accept(this);
         return null;
     }
         
-    public Object visitWhileTree(AST t) {
-        if ( t.getChild(1).accept(this) != boolTree) {
-            constraintError(ConstrainerErrors.BadConditional);
+    public Object visitWhileTree(AST t) throws ConstraintException {
+        if ( t.getChild(1).accept(this) != BoolTree) {
+            throw new ConstraintException( ConstraintExceptionType.BadConditional );
         }
         t.getChild(2).accept(this);
         return null;
@@ -298,8 +288,8 @@ public class Constrainer extends ASTVisitor {
     }
         
     public Object visitIntTree(AST t) {
-        decorate(t,intTree);
-        return intTree;
+        decorate(t, IntTree);
+        return IntTree;
     }
         
     public Object visitIdTree(AST t) {
@@ -314,8 +304,8 @@ public class Constrainer extends ASTVisitor {
         if ( (AST)(leftOp.accept(this)) != (AST)(rightOp.accept(this)) ) {
             constraintError(ConstrainerErrors.TypeMismatchInExpr);
         }
-        decorate(t,boolTree);
-        return boolTree;
+        decorate(t, BoolTree);
+        return BoolTree;
     }
  
 /**

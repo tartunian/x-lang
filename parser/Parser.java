@@ -4,460 +4,294 @@ import java.util.*;
 import lexer.*;
 import ast.*;
 
-/**
- * The Parser class performs recursive-descent parsing; as a by-product it will
- * build the <b>Abstract Syntax Tree</b> representation for the source
- * program<br>
- * Following is the Grammar we are using:<br>
- * <pre>
- *  PROGRAM -> �program� BLOCK ==> program
- *
- *  BLOCK -> �{� D* S* �}�  ==> block
- *
- *  D -> TYPE NAME                    ==> decl
- *    -> TYPE NAME FUNHEAD BLOCK      ==> functionDecl
- *
- *  TYPE  ->  �int�
- *        ->  �boolean�
- *
- *  FUNHEAD  -> '(' (D list ',')? ')'  ==> formals<br>
- *
- *  S -> �if� E �then� BLOCK �else� BLOCK  ==> if
- *    -> �while� E BLOCK               ==> while
- *    -> �return� E                    ==> return
- *    -> BLOCK
- *    -> NAME �=� E                    ==> assign<br>
- *
- *  E -> SE
- *    -> SE �==� SE   ==> =
- *    -> SE �!=� SE   ==> !=
- *    -> SE �<�  SE   ==> <
- *    -> SE �<=� SE   ==> <=
- *
- *  SE  ->  T
- *      ->  SE �+� T  ==> +
- *      ->  SE �-� T  ==> -
- *      ->  SE �|� T  ==> or
- *
- *  T  -> F
- *     -> T �*� F  ==> *
- *     -> T �/� F  ==> /
- *     -> T �&� F  ==> and
- *
- *  F  -> �(� E �)�
- *     -> NAME
- *     -> <int>
- *     -> NAME '(' (E list ',')? ')' ==> call<br>
- *
- *  NAME  -> <id>
- * </pre>
- */
 public class Parser {
 
     private Token currentToken;
     private Lexer lexer;
-    private EnumSet<Tokens> relationalOps
-            = EnumSet.of(Tokens.Equal, Tokens.NotEqual, Tokens.Less, Tokens.LessEqual);
-    private EnumSet<Tokens> addingOps
-            = EnumSet.of(Tokens.Plus, Tokens.Minus, Tokens.Or);
-    private EnumSet<Tokens> multiplyingOps
-            = EnumSet.of(Tokens.Multiply, Tokens.Divide, Tokens.And);
+    private EnumSet<TokenType> relationalOperators
+            = EnumSet.of( TokenType.Equal, TokenType.NotEqual, TokenType.Less, TokenType.LessEqual );
+    private EnumSet<TokenType> additionOperators
+            = EnumSet.of( TokenType.Plus, TokenType.Minus, TokenType.Or );
+    private EnumSet<TokenType> multiplicationOperators
+            = EnumSet.of( TokenType.Multiply, TokenType.Divide, TokenType.And );
 
-    /**
-     * Construct a new Parser;
-     *
-     * @param sourceProgram - source file name
-     * @exception Exception - thrown for any problems at startup (e.g. I/O)
-     */
-    public Parser(String sourceProgram) throws Exception {
+    public Parser( String sourceProgram ) throws Exception {
         try {
-            lexer = new Lexer(sourceProgram);
-            scan();
-        } catch (Exception e) {
-            System.out.println("********exception*******" + e.toString());
+            lexer = new Lexer( sourceProgram );
+            advanceToken();
+        } catch ( Exception e ) {
+            System.out.println( "********exception*******" + e.toString() );
             throw e;
-        };
+        }
     }
 
     public Lexer getLexer() {
         return lexer;
     }
 
-    /**
-     * Execute the parse command
-     *
-     * @return the AST for the source program
-     * @exception Exception - pass on any type of exception raised
-     */
-    public AST execute() throws Exception {
+    public AST getTree() throws Exception {
         try {
-            return rProgram();
-        } catch (SyntaxError e) {
-            e.print();
+            return getProgramTree();
+        } catch ( SyntaxError e ) {
+            System.out.println( e );
             throw e;
         }
     }
 
-    /**
-     * <
-     * pre>
-     * Program -> 'program' block ==> program
-     * </pre>
-     *
-     * @return the program tree
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rProgram() throws SyntaxError {
+    public AST getProgramTree() throws SyntaxError {
         // note that rProgram actually returns a ProgramTree; we use the 
         // principle of substitutability to indicate it returns an AST
         AST t = new ProgramTree();
-        expect( Tokens.Program );
-        t.addChild( rBlock() );
+        checkCurrentTokenAndAdvance( TokenType.Program );
+        t.addChild( getBlockTree() );
         return t;
     }
 
-    /**
-     * <
-     * pre>
-     * block -> '{' d* s* '}' ==> block
-     * </pre>
-     *
-     * @return block tree
-     * @exception SyntaxError - thrown for any syntax error e.g. an expected
-     * left brace isn't found
-     */
-    public AST rBlock() throws SyntaxError {
-        expect( Tokens.LeftBrace );
+    public AST getBlockTree() throws SyntaxError {
+        checkCurrentTokenAndAdvance( TokenType.LeftBrace );
         AST t = new BlockTree();
-        while ( startingDecl() ) {  // get decls
-                t.addChild( rDecl() );
+        while ( checkStartingDeclaration() ) {  // get decls
+                t.addChild( getDeclarationTree() );
         }
-        while ( startingStatement() ) {  // get statements
-                t.addChild( rStatement() );
+        while ( checkStartingStatement() ) {  // get statements
+                t.addChild( getStatementTree() );
         }
-        expect( Tokens.RightBrace );
+        checkCurrentTokenAndAdvance( TokenType.RightBrace );
         return t;
     }
 
-    boolean startingDecl() {
-        if (isNextTok(Tokens.Int) || isNextTok(Tokens.BOOLean)) {
+    /*
+     * Check for valid first line declarations?
+     */
+    boolean checkStartingDeclaration() {
+        if ( isCurrentTokenOfType( TokenType.Int ) || isCurrentTokenOfType( TokenType.BOOLean ) ) {
             return true;
         }
         return false;
     }
 
-    boolean startingStatement() {
-        if (isNextTok(Tokens.If) || isNextTok(Tokens.While) || isNextTok(Tokens.Return)
-                || isNextTok(Tokens.LeftBrace) || isNextTok(Tokens.Identifier)) {
+    boolean checkStartingStatement() {
+        if ( isCurrentTokenOfType( TokenType.If ) || isCurrentTokenOfType( TokenType.While ) ||
+                isCurrentTokenOfType( TokenType.Return ) || isCurrentTokenOfType( TokenType.LeftBrace ) ||
+                isCurrentTokenOfType( TokenType.Identifier )) {
             return true;
         }
         return false;
     }
 
-    /**
-     * <
-     * pre>
-     * d -> type name ==> decl -> type name funcHead block ==> functionDecl
-     * </pre>
-     *
-     * @return either the decl tree or the functionDecl tree
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rDecl() throws SyntaxError {
-        AST t, t1;
-        t = rType();
-        t1 = rName();
-        if (isNextTok(Tokens.LeftParen)) { // function
-            t = (new FunctionDeclTree()).addChild(t).addChild(t1);
-            t.addChild(rFunHead());
-            t.addChild(rBlock());
-            return t;
+    public AST getDeclarationTree() throws SyntaxError {
+        AST typeTree, identifierTree;
+        typeTree = getIntBoolTypeTree();
+        identifierTree = getIdentifierTree();
+        if ( isCurrentTokenOfType( TokenType.LeftParen ) ) { // function
+            typeTree = ( new FunctionDeclTree() ).addChild( typeTree ).addChild( identifierTree );
+            typeTree.addChild( getFormalsTree() );
+            typeTree.addChild( getBlockTree() );
+            return typeTree;
         }
-        t = (new DeclTree()).addChild(t).addChild(t1);
-        return t;
+        typeTree = ( new DeclTree() ).addChild( typeTree ).addChild( identifierTree );
+        return typeTree;
     }
 
-    /**
-     * <
-     * pre>
-     * type -> 'int' type -> 'bool'
-     * </pre>
-     *
-     * @return either the intType or boolType tree
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rType() throws SyntaxError {
+    public AST getIntBoolTypeTree() throws SyntaxError {
         AST t;
-        if (isNextTok(Tokens.Int)) {
+        if ( isCurrentTokenOfType( TokenType.Int ) ) {
             t = new IntTypeTree();
-            scan();
+            advanceToken();
         } else {
-            expect(Tokens.BOOLean);
+            checkCurrentTokenAndAdvance( TokenType.BOOLean );
             t = new BoolTypeTree();
         }
         return t;
     }
 
-    /**
-     * <
-     * pre>
-     * funHead -> '(' (decl list ',')? ')' ==> formals note a funhead is a list
-     * of zero or more decl's separated by commas, all in parens
-     * </pre>
-     *
-     * @return the formals tree describing this list of formals
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rFunHead() throws SyntaxError {
+    public AST getFormalsTree() throws SyntaxError {
         AST t = new FormalsTree();
-        expect(Tokens.LeftParen);
-        if (!isNextTok(Tokens.RightParen)) {
+        checkCurrentTokenAndAdvance( TokenType.LeftParen );
+        if ( !isCurrentTokenOfType( TokenType.RightParen ) ) {
             do {
-                t.addChild(rDecl());
-                if (isNextTok(Tokens.Comma)) {
-                    scan();
+                t.addChild( getDeclarationTree() );
+                if ( isCurrentTokenOfType( TokenType.Comma ) ) {
+                    advanceToken();
                 } else {
                     break;
                 }
-            } while (true);
+            } while ( true );
         }
-        expect(Tokens.RightParen);
+        checkCurrentTokenAndAdvance( TokenType.RightParen );
         return t;
     }
 
-    /**
-     * <
-     * pre>
-     * S -> 'if' e 'then' block 'else' block ==> if -> 'while' e block ==> while
-     * -> 'return' e ==> return -> block -> name '=' e ==> assign
-     * </pre>
-     *
-     * @return the tree corresponding to the statement found
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rStatement() throws SyntaxError {
+    public AST getStatementTree() throws SyntaxError {
         AST t;
-        if (isNextTok(Tokens.If)) {
-            scan();
+        if ( isCurrentTokenOfType( TokenType.If ) ) {
+            advanceToken();
             t = new IfTree();
-            t.addChild(rExpr());
-            expect(Tokens.Then);
-            t.addChild(rBlock());
-            expect(Tokens.Else);
-            t.addChild(rBlock());
+            t.addChild( getExpressionTree() );
+            checkCurrentTokenAndAdvance( TokenType.Then );
+            t.addChild( getBlockTree() );
+            checkCurrentTokenAndAdvance( TokenType.Else );
+            t.addChild( getBlockTree() );
             return t;
-        }
-        if (isNextTok(Tokens.While)) {
-            scan();
+        } else if ( isCurrentTokenOfType( TokenType.While ) ) {
+            advanceToken();
             t = new WhileTree();
-            t.addChild(rExpr());
-            t.addChild(rBlock());
+            t.addChild( getExpressionTree() );
+            t.addChild( getBlockTree() );
             return t;
-        }
-        if (isNextTok(Tokens.Return)) {
-            scan();
+        } else if ( isCurrentTokenOfType( TokenType.Return ) ) {
+            advanceToken();
             t = new ReturnTree();
-            t.addChild(rExpr());
+            t.addChild( getExpressionTree() );
+            return t;
+        } else if ( isCurrentTokenOfType( TokenType.LeftBrace ) ) {
+            return getBlockTree();
+        } else {
+            t = getIdentifierTree();
+            t = ( new AssignTree() ).addChild( t );
+            checkCurrentTokenAndAdvance( TokenType.Assign );
+            t.addChild( getExpressionTree() );
             return t;
         }
-        if (isNextTok(Tokens.LeftBrace)) {
-            return rBlock();
-        }
-        t = rName();
-        t = (new AssignTree()).addChild(t);
-        expect(Tokens.Assign);
-        t.addChild(rExpr());
-        return t;
     }
 
-    /**
-     * <
-     * pre>
-     * e -> se -> se '==' se ==> = -> se '!=' se ==> != -> se '<' se ==> < -> se
-     * '<=' se ==> <= </pre> @return the tree corresponding to the expression
-     *
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rExpr() throws SyntaxError {
-        AST t, kid = rSimpleExpr();
+    public AST getExpressionTree() throws SyntaxError {
+        AST t, child = getSimpleExpressionTree();
         t = getRelationTree();
-        if (t == null) {
-            return kid;
+        if ( t == null ) {
+            return child;
         }
-        t.addChild(kid);
-        t.addChild(rSimpleExpr());
+        t.addChild( child );
+        t.addChild( getSimpleExpressionTree() );
         return t;
     }
 
-    /**
-     * <
-     * pre>
-     * se -> t -> se '+' t ==> + -> se '-' t ==> - -> se '|' t ==> or This rule
-     * indicates we should pick up as many <i>t</i>'s as possible; the
-     * <i>t</i>'s will be left associative
-     * </pre>
-     *
-     * @return the tree corresponding to the adding expression
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rSimpleExpr() throws SyntaxError {
-        AST t, kid = rTerm();
-        while ((t = getAddOperTree()) != null) {
-            t.addChild(kid);
-            t.addChild(rTerm());
-            kid = t;
+    public AST getSimpleExpressionTree() throws SyntaxError {
+        AST t, child = getMultiplicationExpressionTree();
+        while ( ( t = getAdditionOperationTree() ) != null ) {
+            t.addChild( child );
+            t.addChild( getMultiplicationExpressionTree() );
+            child = t;
         }
-        return kid;
+        return child;
     }
 
-    /**
-     * <
-     * pre>
-     * t -> f -> t '*' f ==> * -> t '/' f ==> / -> t '&' f ==> and This rule
-     * indicates we should pick up as many <i>f</i>'s as possible; the
-     * <i>f</i>'s will be left associative
-     * </pre>
-     *
-     * @return the tree corresponding to the multiplying expression
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rTerm() throws SyntaxError {
-        AST t, kid = rFactor();
-        while ((t = getMultOperTree()) != null) {
-            t.addChild(kid);
-            t.addChild(rFactor());
-            kid = t;
+    public AST getMultiplicationExpressionTree() throws SyntaxError {
+        AST t, child = getFactorTree();
+        while ( ( t = getMultiplicationOperationTree() ) != null ) {
+            t.addChild( child );
+            t.addChild( getFactorTree() );
+            child = t;
         }
-        return kid;
+        return child;
     }
 
-    /**
-     * <
-     * pre>
-     * f -> '(' e ')' -> name -> <int>
-     * -> name '(' (e list ',')? ')' ==> call
-     * </pre>
-     *
-     * @return the tree corresponding to the factor expression
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rFactor() throws SyntaxError {
+    public AST getFactorTree() throws SyntaxError {
         AST t;
-        if (isNextTok(Tokens.LeftParen)) { // -> (e)
-            scan();
-            t = rExpr();
-            expect(Tokens.RightParen);
+        if ( isCurrentTokenOfType( TokenType.LeftParen ) ) {
+            advanceToken();
+            t = getExpressionTree();
+            checkCurrentTokenAndAdvance( TokenType.RightParen );
             return t;
         }
-        if (isNextTok(Tokens.INTeger)) {  //  -> <int>
-            t = new IntTree(currentToken);
-            scan();
+        if ( isCurrentTokenOfType( TokenType.INTeger ) ) {
+            t = new IntTree( currentToken );
+            advanceToken();
             return t;
         }
-        t = rName();
-        if (!isNextTok(Tokens.LeftParen)) {  //  -> name
+        t = getIdentifierTree();
+        if ( !isCurrentTokenOfType( TokenType.LeftParen ) ) {
             return t;
         }
-        scan();     // -> name '(' (e list ',')? ) ==> call
-        t = (new CallTree()).addChild(t);
-        if (!isNextTok(Tokens.RightParen)) {
+        advanceToken();
+        t = ( new CallTree() ).addChild( t );
+        if ( !isCurrentTokenOfType( TokenType.RightParen ) ) {
             do {
-                t.addChild(rExpr());
-                if (isNextTok(Tokens.Comma)) {
-                    scan();
+                t.addChild( getExpressionTree() );
+                if ( isCurrentTokenOfType( TokenType.Comma ) ) {
+                    advanceToken();
                 } else {
                     break;
                 }
-            } while (true);
+            } while ( true );
         }
-        expect(Tokens.RightParen);
+        checkCurrentTokenAndAdvance( TokenType.RightParen );
         return t;
     }
 
-    /**
-     * <
-     * pre>
-     * name -> <id>
-     * </pre>
-     *
-     * @return the id tree
-     * @exception SyntaxError - thrown for any syntax error
-     */
-    public AST rName() throws SyntaxError {
+    public AST getIdentifierTree() throws SyntaxError {
         AST t;
-        if (isNextTok(Tokens.Identifier)) {
-            t = new IdTree(currentToken);
-            scan();
+        if ( isCurrentTokenOfType( TokenType.Identifier ) ) {
+            t = new IdTree( currentToken );
+            advanceToken();
             return t;
         }
-        throw new SyntaxError(currentToken, Tokens.Identifier);
+        throw new SyntaxError( currentToken, TokenType.Identifier );
     }
 
-    AST getRelationTree() {  // build tree with current token's relation
-        Tokens kind = currentToken.getKind();
-        if (relationalOps.contains(kind)) {
-            AST t = new RelOpTree(currentToken);
-            scan();
-            return t;
-        } else {
-            return null;
-        }
-    }
-
-    private AST getAddOperTree() {
-        Tokens kind = currentToken.getKind();
-        if (addingOps.contains(kind)) {
-            AST t = new AddOpTree(currentToken);
-            scan();
+    AST getRelationTree() {
+        TokenType type = currentToken.getType();
+        if ( relationalOperators.contains( type ) ) {
+            AST t = new RelOpTree( currentToken );
+            advanceToken();
             return t;
         } else {
             return null;
         }
     }
 
-    private AST getMultOperTree() {
-        Tokens kind = currentToken.getKind();
-        if (multiplyingOps.contains(kind)) {
-            AST t = new MultOpTree(currentToken);
-            scan();
+    private AST getAdditionOperationTree() {
+        TokenType type = currentToken.getType();
+        if ( additionOperators.contains( type ) ) {
+            AST t = new AddOpTree( currentToken );
+            advanceToken();
             return t;
         } else {
             return null;
         }
     }
 
-    private boolean isNextTok( Tokens kind ) {
-        if ( (currentToken == null ) || ( currentToken.getKind() != kind ) ) {
+    private AST getMultiplicationOperationTree() {
+        TokenType type = currentToken.getType();
+        if ( multiplicationOperators.contains( type ) ) {
+            AST t = new MultOpTree( currentToken );
+            advanceToken();
+            return t;
+        } else {
+            return null;
+        }
+    }
+
+    private boolean isCurrentTokenOfType( TokenType type ) {
+        if ( ( currentToken == null ) || ( currentToken.getType() != type ) ) {
             return false;
         }
         return true;
     }
 
-    private void expect( Tokens kind ) throws SyntaxError {
-        if ( isNextTok( kind ) ) {
-            scan();
+    private void checkCurrentTokenAndAdvance( TokenType type ) throws SyntaxError {
+        if ( isCurrentTokenOfType( type ) ) {
+            advanceToken();
             return;
         }
-        throw new SyntaxError( currentToken, kind );
+        throw new SyntaxError( currentToken, type );
     }
 
-    private void scan() {
+    private void advanceToken() {
         currentToken = lexer.nextToken();
-        if (currentToken != null) {
-            currentToken.print();   // debug printout
+        if ( currentToken.getType() != TokenType.EndProgram ) {
+            System.out.println( currentToken );
         }
-        return;
     }
 
     public static void main( String args[] ) {
         String sourceFile = args[0];
-        Parser p;
+        Parser parser;
 
         try {
-            p = new Parser( sourceFile );
-            p.execute();
-        } catch ( Exception e ) {
-        }
+            parser = new Parser( sourceFile );
+            parser.getTree();
+        } catch ( Exception e ) { }
     }
 
 }

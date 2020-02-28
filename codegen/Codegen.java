@@ -178,8 +178,8 @@ public class Codegen extends ASTVisitor {
         // as any other function
         String readLabel = "Read",
                writeLabel = "Write";
-        AST readTree = Constrainer.readTree,
-            writeTree = Constrainer.writeTree;
+        AST readTree = Constrainer.ReadTree,
+            writeTree = Constrainer.WriteTree;
         readTree.setLabel(readLabel);
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,readLabel));
         storeop(new Code(Codes.ByteCodes.READ));
@@ -230,7 +230,7 @@ public class Codegen extends ASTVisitor {
     public Object visitBlockTree(AST t) {
         //System.out.println("visitBlockTree");
         openBlock();
-        visitKids(t);
+        visitChildren(t);
         storeop(new NumOpcode(Codes.ByteCodes.POP,getBlockSize()));
         // remove any local variables from runtime stack
         closeBlock();

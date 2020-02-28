@@ -93,9 +93,12 @@ public class Table {
  /**
   * Gets the object associated with the specified symbol in the Table.
   */
-  public Object get(Symbol key) {
-	Binder e = symbols.get(key);
-	return e.getValue();
+  public Object get( Symbol key ) throws ConstraintException {
+    if( symbols.containsKey( key ) ) {
+      Binder b = symbols.get( key );
+      return b.getValue();
+    }
+    throw new ConstraintException( ConstraintExceptionType.UnrecognizedIdentifier );
   }
 
  /**
@@ -113,7 +116,7 @@ public class Table {
   */
   public void beginScope() {
     marks = new Binder(null,top,marks);
-    top=null;
+    top = null;
   }
 
  /**
@@ -121,18 +124,18 @@ public class Table {
   *	that has not already been ended.
   */
   public void endScope() {
-	while (top!=null) {
-	   Binder e = symbols.get(top);
-	   if (e.getTail()!=null) symbols.put(top,e.getTail());
-	   else symbols.remove(top);
-	   top = e.getPrevtop();
-	}
-	top=marks.getPrevtop();
-	marks=marks.getTail();
+	  while ( top != null ) {
+	    Binder e = symbols.get( top );
+	    if ( e.getTail() != null ) symbols.put( top, e.getTail() );
+	    else symbols.remove( top );
+	    top = e.getPrevtop();
+	  }
+	  top = marks.getPrevtop();
+	  marks = marks.getTail();
   }
 
   /**
    * @return a set of the Table's symbols.
    */
-  public java.util.Set<Symbol> keys() {return symbols.keySet();}
+  public java.util.Set<Symbol> keys() { return symbols.keySet();}
 }

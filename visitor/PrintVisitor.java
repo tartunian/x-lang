@@ -58,7 +58,7 @@ public class PrintVisitor extends ASTVisitor {
         }
         System.out.println(s);
         indent += 2;
-        visitKids(t);
+        visitChildren(t);
         indent -= 2;
     }
 

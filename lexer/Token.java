@@ -28,16 +28,6 @@ public class Token {
     return symbol;
   }
 
-  public void print() {
-    System.out.println(
-      "       " + symbol.toString() +
-      "             left: " + leftPosition +
-      " right: " + rightPosition
-    );
-
-    return;
-  }
-
   public String toString() {
 
     String output = String.format( "%-11s left: %-8d right: %-8d line: %-8d %-8s",
@@ -45,12 +35,9 @@ public class Token {
       leftPosition,
       rightPosition,
       lineNumber,
-      TokenType.tokens.get( getKind() )
+      getType().name()
     );
 
-    //if ((getKind() == Tokens.Identifier) || (getKind() == Tokens.INTeger)) {
-      //output += symbol.toString();
-    //}
     return output;
   }
 
@@ -66,8 +53,8 @@ public class Token {
    *  @return the integer that represents the kind of symbol we have which
    *  is actually the type of token associated with the symbol
    */
-  public Tokens getKind() {
-    return symbol.getKind();
+  public TokenType getType() {
+    return symbol.getType();
   }
 }
 

@@ -1,9 +1,14 @@
-program {
-	int f(int a) { return a + 1 }
+program { boolean b int i
+	int f(int a) {
+		return a + 1
+	}
+	i = 3
+	i = f(i)
 	if (s == arg) then
-		{ boolean b= i > j }
-	} else {
-		while(i>0) {
-			i = i - 1
+		{ b = true }
+	else {
+		while(i) {
+			i = ( i - 1 )
 		}
 	}
+}
