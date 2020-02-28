@@ -1,6 +1,8 @@
 package ast;
 
 import java.util.*;
+
+import constrain.ConstraintException;
 import visitor.*;
 
 /**
@@ -66,7 +68,7 @@ public abstract class AST {
  *  constrainer and code generator)
  *  @return the desired Object, as determined by the visitor
 */
-    public abstract Object accept(ASTVisitor v);
+    public abstract Object accept( ASTVisitor v );
 
     public AST addChild( AST child ) {
         children.add( child );

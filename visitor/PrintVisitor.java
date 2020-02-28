@@ -1,6 +1,7 @@
 package visitor;
 
 import ast.*;
+import constrain.ConstraintException;
 
 /**
  *  PrintVisitor is used to visit an AST and print it using
@@ -58,7 +59,7 @@ public class PrintVisitor extends ASTVisitor {
         }
         System.out.println(s);
         indent += 2;
-        visitChildren(t);
+        visitChildren( t );
         indent -= 2;
     }
 

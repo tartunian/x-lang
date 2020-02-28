@@ -53,7 +53,7 @@ public class Constrainer extends ASTVisitor {
     
     public void execute() {
         symtab.beginScope();
-        t.accept(this);
+        t.accept( this );
     }
 
 /**
@@ -94,7 +94,7 @@ public class Constrainer extends ASTVisitor {
  *  build the intrinsic trees; constrain them in the same fashion
  *  as any other AST
 */
-    private void buildIntrinsicTrees() {
+    private void buildIntrinsicTrees() throws ConstraintException {
         Lexer lex = parser.getLexer();
         TrueTree = new IdTree( lex.newIdToken( "true",-1,-1, -1 ) );
         FalseTree = new IdTree(lex.newIdToken( "false",-1,-1, -1 ) );
@@ -128,7 +128,7 @@ public class Constrainer extends ASTVisitor {
 /**
  *  Constrain the program tree - visit its kid
 */
-    public Object visitProgramTree(AST t) {
+    public Object visitProgramTree(AST t) throws ConstraintException {
         buildIntrinsicTrees();
         this.t = t;
         t.getChild(1).accept(this);
@@ -140,7 +140,7 @@ public class Constrainer extends ASTVisitor {
  *  <ol><li>open a new scope, <li>constrain the kids in this new scope, <li>close the
  *  scope removing any local declarations from this scope</ol>
 */
-    public Object visitBlockTree(AST t) {
+    public Object visitBlockTree(AST t) throws ConstraintException {
         symtab.beginScope();
         visitChildren(t);
         symtab.endScope();
@@ -151,7 +151,7 @@ public class Constrainer extends ASTVisitor {
  *  <ol><li>Enter the function name in the current scope, <li>enter the formals
  *  in the function scope and <li>constrain the body of the function</ol>
 */
-    public Object visitFunctionDeclTree(AST t) {
+    public Object visitFunctionDeclTree(AST t) throws ConstraintException {
         AST fname = t.getChild(2),
             returnType = t.getChild(1),
             formalsTree = t.getChild(3),
@@ -202,7 +202,7 @@ public class Constrainer extends ASTVisitor {
                     formalDecl = formalChildren.next();
                 if (decoration(actualDecl.getChild(2)) !=
                     decoration(formalDecl.getChild(2))) {
-                    throw new ConstraintException( ConstraintExceptionType.ActualFormalTypeMismatch )
+                    throw new ConstraintException( ConstraintExceptionType.ActualFormalTypeMismatch );
                 }
             } catch (Exception e) {
                 throw new ConstraintException( ConstraintExceptionType.NumberActualsFormalsDiffer );
@@ -253,15 +253,15 @@ public class Constrainer extends ASTVisitor {
  *  Check that the returned expression type matches the type indicated
  *  in the function we're returning from
 */
-    public Object visitReturnTree(AST t) {
+    public Object visitReturnTree(AST t) throws ConstraintException {
         if (functions.empty()) {
-            constraintError(ConstrainerErrors.ReturnNotInFunction);
+            throw new ConstraintException( ConstraintExceptionType.ReturnNotInFunction );
         }
         AST currentFunction = (functions.peek());
         decorate(t,currentFunction);
         AST returnType = decoration(currentFunction.getChild(1));
         if ( (t.getChild(1).accept(this)) != returnType) {
-            constraintError(ConstrainerErrors.BadReturnExpr);
+            throw new ConstraintException( ConstraintExceptionType.BadReturnExpr );
         }
         return null;
     }
@@ -272,7 +272,7 @@ public class Constrainer extends ASTVisitor {
  *  match; when we constrain an expression we'll return a reference
  *  to the intrinsic type tree describing the type of the expression
 */
-    public Object visitAssignTree(AST t) {
+    public Object visitAssignTree(AST t) throws ConstraintException {
         AST idTree = t.getChild(1),
             idDecl = lookup(idTree),
             typeTree;
@@ -282,7 +282,7 @@ public class Constrainer extends ASTVisitor {
         // now check that the types of the expr and id are the same
         // visit the expr tree and get back its type
         if ( (t.getChild(2).accept(this)) != typeTree) {
-            constraintError(ConstrainerErrors.BadAssignmentType);
+            throw new ConstraintException( ConstraintExceptionType.BadAssignmentType );
         }
         return null;
     }
@@ -292,17 +292,17 @@ public class Constrainer extends ASTVisitor {
         return IntTree;
     }
         
-    public Object visitIdTree(AST t) {
+    public Object visitIdTree(AST t) throws ConstraintException {
         AST decl = lookup(t);
         decorate(t,decl);
         return decoration(decl.getChild(2));
     }
         
-    public Object visitRelOpTree(AST t) {
+    public Object visitRelOpTree(AST t) throws ConstraintException {
         AST leftOp = t.getChild(1),
             rightOp = t.getChild(2);
         if ( (AST)(leftOp.accept(this)) != (AST)(rightOp.accept(this)) ) {
-            constraintError(ConstrainerErrors.TypeMismatchInExpr);
+            throw new ConstraintException( ConstraintExceptionType.TypeMismatchInExpr );
         }
         decorate(t, BoolTree);
         return BoolTree;
@@ -315,17 +315,17 @@ public class Constrainer extends ASTVisitor {
  *  then the types must be a reference to the intTree
  *  @return the type of the tree
 */
-    public Object visitAddOpTree(AST t) {
+    public Object visitAddOpTree(AST t) throws ConstraintException {
         AST leftOpType = (AST)(t.getChild(1).accept(this)),
             rightOpType = (AST)(t.getChild(2).accept(this));
         if (leftOpType != rightOpType) {
-            constraintError(ConstrainerErrors.TypeMismatchInExpr);
+            throw new ConstraintException( ConstraintExceptionType.TypeMismatchInExpr );
         }
         decorate(t,leftOpType);
         return leftOpType;
     }
         
-    public Object visitMultOpTree(AST t) {
+    public Object visitMultOpTree(AST t) throws ConstraintException {
         return visitAddOpTree(t);
     }
 
@@ -334,12 +334,12 @@ public class Constrainer extends ASTVisitor {
     public Object visitFormalsTree(AST t) {return null;}
     public Object visitActualArgsTree(AST t) {return null;}
     
-    void constraintError(ConstrainerErrors err) {
+    /*void constraintError(ConstrainerErrors err) {
         PrintVisitor v1 = new PrintVisitor();
         v1.visitProgramTree(t);
         System.out.println("****CONSTRAINER ERROR: " + err + "   ****");
         System.exit(1);
         return;
-    }
+    }*/
     
 }

@@ -12,31 +12,32 @@ import ast.*;
  *  e.g. when the constrainer visits an expression tree it will return
  *  a reference to the type tree representing the type of the expression
 */
-public abstract class ASTVisitor {
+
+public abstract class ASTVisitor<T extends Throwable> {
 
     public void visitChildren(AST t) {
-        for (AST kid : t.getChildren()) {
-            kid.accept(this);
+        for ( AST child : t.getChildren() ) {
+            child.accept(this);
         }
         return;
     }
 
-    public abstract Object visitProgramTree(AST t) throws Exception;
-    public abstract Object visitBlockTree(AST t) throws Exception;
-    public abstract Object visitFunctionDeclTree(AST t) throws Exception;
-    public abstract Object visitCallTree(AST t) throws Exception;
-    public abstract Object visitDeclTree(AST t) throws Exception;
-    public abstract Object visitIntTypeTree(AST t) throws Exception;
-    public abstract Object visitBoolTypeTree(AST t) throws Exception;
-    public abstract Object visitFormalsTree(AST t) throws Exception;
-    public abstract Object visitActualArgsTree(AST t) throws Exception;
-    public abstract Object visitIfTree(AST t) throws Exception;
-    public abstract Object visitWhileTree(AST t) throws Exception;
-    public abstract Object visitReturnTree(AST t) throws Exception;
-    public abstract Object visitAssignTree(AST t) throws Exception;
-    public abstract Object visitIntTree(AST t) throws Exception;
-    public abstract Object visitIdTree(AST t) throws Exception;
-    public abstract Object visitRelOpTree(AST t) throws Exception;
-    public abstract Object visitAddOpTree(AST t) throws Exception;
-    public abstract Object visitMultOpTree(AST t) throws Exception;
+    public abstract Object visitProgramTree(AST t);
+    public abstract Object visitBlockTree(AST t);
+    public abstract Object visitFunctionDeclTree(AST t);
+    public abstract Object visitCallTree(AST t);
+    public abstract Object visitDeclTree(AST t);
+    public abstract Object visitIntTypeTree(AST t);
+    public abstract Object visitBoolTypeTree(AST t);
+    public abstract Object visitFormalsTree(AST t);
+    public abstract Object visitActualArgsTree(AST t);
+    public abstract Object visitIfTree(AST t);
+    public abstract Object visitWhileTree(AST t);
+    public abstract Object visitReturnTree(AST t);
+    public abstract Object visitAssignTree(AST t);
+    public abstract Object visitIntTree(AST t);
+    public abstract Object visitIdTree(AST t);
+    public abstract Object visitRelOpTree(AST t);
+    public abstract Object visitAddOpTree(AST t);
+    public abstract Object visitMultOpTree(AST t);
 }
