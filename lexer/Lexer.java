@@ -91,7 +91,7 @@ public class Lexer {
       word += currentCharacter;
       currentCharacter = source.read();
       endPosition++;
-      if( source.getLineNumber() != startingLineNumber ) {
+      if( source.isAtEndOfLine() && currentCharacter != '\"' ) {
         throw new LexicalException( String.format( "******** illegal characters: %s", word ) );
         /*System.out.println( String.format( "******** illegal characters: %s", word ) );
         errorLineNumber = startingLineNumber;
