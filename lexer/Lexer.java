@@ -1,7 +1,5 @@
 package lexer;
 
-import util.ErrorHandler;
-
 import java.io.IOException;
 
 /**
@@ -14,6 +12,7 @@ import java.io.IOException;
  *  are space, tab, newlines
  */
 public class Lexer {
+  private int errorLineNumber;
   private boolean atEOF = false;
   // next character to process
   private char currentCharacter;
@@ -86,13 +85,11 @@ public class Lexer {
    *  @return the Token just found
    */
   public Token makeToken( String s, int lineNumber, int startPosition, int endPosition ) {
-
     // ensure it's a valid token
     Symbol symbol = Symbol.put( s, Tokens.BogusToken );
 
     if( symbol == null ) {
-      //System.out.println( "******** illegal character: " + s );
-      ErrorHandler.getInstance().logError("InvalidCharacter", lineNumber, startPosition, s);
+      System.out.println( "******** illegal character: " + s );
       atEOF = true;
       return nextToken();
     }
@@ -147,11 +144,18 @@ public class Lexer {
 
   private Token getStringLiteralToken() throws IOException {
     String word = "";
+    int startingLineNumber = source.getLineNumber();
 
     do {
       word += currentCharacter;
       currentCharacter = source.read();
       endPosition++;
+      if( source.getLineNumber() != startingLineNumber ) {
+        System.out.println( String.format( "******** illegal characters: %s", word ) );
+        errorLineNumber = startingLineNumber;
+        word += '\"';
+        return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( word, Tokens.StringLit ) );
+      }
     } while ( currentCharacter != '\"' );
 
     currentCharacter = source.read();
@@ -163,6 +167,7 @@ public class Lexer {
 
   private Token getCharacterLiteralToken() throws IOException {
     String c = "";
+    int startingLineNumber = source.getLineNumber();
 
     c += currentCharacter;
 
@@ -175,8 +180,10 @@ public class Lexer {
     endPosition++;
 
     if( currentCharacter != '\'' ) {
-      System.out.println( String.format( "******** illegal character: line: %-8d column: %-8d %-2s", source.getLineNumber(), startPosition, currentCharacter ) );
-      return null;
+      System.out.println( String.format( "******** illegal characters: %s", c ) );
+      errorLineNumber = startingLineNumber;
+      c += '\'';
+      return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( c, Tokens.CharLit ) );
     }
 
     currentCharacter = source.read();
@@ -262,8 +269,11 @@ public class Lexer {
       // Print out the full source code.
       String sourceCodeLine;
       while( ( sourceCodeLine = lexer.source.readLine() ) != null ) {
-        String s = lexer.source.getLineNumber() + ": " + sourceCodeLine;
+        String s = String.format( "%3d: %s", lexer.source.getLineNumber(), sourceCodeLine );
         System.out.println( s );
+        if( lexer.source.getLineNumber() == lexer.errorLineNumber ) {
+          break;
+        }
       }
 
     } catch (Exception e) { System.out.println( e ); }
