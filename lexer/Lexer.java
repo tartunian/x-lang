@@ -32,43 +32,6 @@ public class Lexer {
     currentCharacter = source.read();
   }
 
-  /**
-   *  newIdTokens are either ids or reserved words; new id's will be inserted
-   *  in the symbol table with an indication that they are id's
-   *  @param id is the String just scanned - it's either an id or reserved word
-   *  @param startPosition is the column in the source file where the token begins
-   *  @param endPosition is the column in the source file where the token ends
-   *  @return the Token; either an id or one for the reserved words
-   */
-  public Token newIdToken( String id, int lineNumber, int startPosition, int endPosition ) {
-    return new Token(
-      lineNumber,
-      startPosition,
-      endPosition,
-      Symbol.put( id, Tokens.Identifier )
-    );
-  }
-
-  /**
-   *  number tokens are inserted in the symbol table; we don't convert the
-   *  numeric strings to numbers until we load the bytecodes for interpreting;
-   *  this ensures that any machine numeric dependencies are deferred
-   *  until we actually run the program; i.e. the numeric constraints of the
-   *  hardware used to compile the source program are not used
-   *  @param number is the int String just scanned
-   *  @param startPosition is the column in the source file where the int begins
-   *  @param endPosition is the column in the source file where the int ends
-   *  @return the int Token
-   */
-  public Token newNumberToken( String number, int lineNumber, int startPosition, int endPosition) {
-    return new Token(
-      lineNumber,
-      startPosition,
-      endPosition,
-      Symbol.put( number, Tokens.INTeger )
-    );
-  }
-
   private void consumeComments() throws IOException {
     int startingLine = source.getLineNumber();
     do {
@@ -76,29 +39,8 @@ public class Lexer {
     } while ( source.getLineNumber() == startingLine );
   }
 
-  /**
-   *  build the token for operators (+ -) or separators (parens, braces)
-   *  filter out comments which begin with two slashes
-   *  @param s is the String representing the token
-   *  @param startPosition is the column in the source file where the token begins
-   *  @param endPosition is the column in the source file where the token ends
-   *  @return the Token just found
-   */
-  public Token makeToken( String s, int lineNumber, int startPosition, int endPosition ) {
-    // ensure it's a valid token
-    Symbol symbol = Symbol.put( s, Tokens.BogusToken );
-
-    if( symbol == null ) {
-      System.out.println( "******** illegal character: " + s );
-      atEOF = true;
-      return nextToken();
-    }
-
-    return new Token( lineNumber, startPosition, endPosition, symbol );
-  }
-
   private void consumeWhiteSpace() throws IOException {
-    while( Character.isWhitespace( currentCharacter )) {
+    while( Character.isWhitespace( currentCharacter ) ) {
       currentCharacter = source.read();
     }
     startPosition = source.getPosition();
@@ -114,7 +56,7 @@ public class Lexer {
       currentCharacter = source.read();
     } while ( Character.isJavaIdentifierPart( currentCharacter ) );
 
-    return newIdToken( id, source.getLineNumber(), startPosition, endPosition );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( id, Tokens.Identifier ) );
   }
 
   private Token getKeywordToken() throws IOException {
@@ -139,7 +81,7 @@ public class Lexer {
       currentCharacter = source.read();
     } while( Character.isDigit( currentCharacter ) );
 
-    return newNumberToken( number, source.getLineNumber(), startPosition, endPosition );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( number, Tokens.INTeger ) );
   }
 
   private Token getStringLiteralToken() throws IOException {
@@ -207,13 +149,28 @@ public class Lexer {
 
     Symbol sym = Symbol.put( twoCharToken, Tokens.BogusToken );
     if ( sym == null ) {
-      return makeToken( Character.toString( firstCharacter ), source.getLineNumber(), startPosition, endPosition );
+      sym = Symbol.put( Character.toString( firstCharacter ), Tokens.BogusToken );
+      if ( sym == null ) {
+        System.out.println( "******** illegal character: " + firstCharacter );
+        atEOF = true;
+        return nextToken();
+      } else {
+        return new Token( source.getLineNumber(), startPosition, endPosition, sym );
+      }
+    } else {
+
+      endPosition++;
+      currentCharacter = source.read();
+
+      sym = Symbol.put( twoCharToken, Tokens.BogusToken );
+      if ( sym == null ) {
+        System.out.println( "******** illegal character: " + twoCharToken );
+        atEOF = true;
+        return nextToken();
+      } else {
+        return new Token( source.getLineNumber(), startPosition, endPosition, sym );
+      }
     }
-
-    endPosition++;
-    currentCharacter = source.read();
-
-    return makeToken( twoCharToken, source.getLineNumber(), startPosition, endPosition );
   }
 
   private Token getEndOfFileToken() {
@@ -276,7 +233,7 @@ public class Lexer {
         }
       }
 
-    } catch (Exception e) { System.out.println( e ); }
+    } catch ( Exception e ) { System.out.println( e ); }
 
   }
 
