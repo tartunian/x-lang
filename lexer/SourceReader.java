@@ -104,6 +104,9 @@ public class SourceReader {
     return lineNumber;
   }
 
+  public boolean isAtEndOfLine() {
+    return position == nextLine.length();
+  }
 
 /*
   public static void main( String args[] ) {
