@@ -8,37 +8,45 @@ package lexer;
 public class Symbol {
   private String name;
   // token kind of symbol
-  private Tokens kind;
+  private TokenType type;
 
-  private Symbol( String n, Tokens kind ) {
+  private Symbol( String n, TokenType type ) {
     name = n;
-    this.kind = kind;
+    this.type = type;
   }
 
   // symbols contains all strings in the source program
   private static java.util.HashMap<String,Symbol> symbols = new java.util.HashMap<String,Symbol>();
 
+  public static boolean isKeyword( String s ) {
+    return symbols.containsKey( s );
+  }
+
+  public static Symbol getSymbolForKeywordString( String keyword ) {
+    return symbols.get( keyword );
+  }
+
   public String toString() {
     return name;
   }
 
-  public Tokens getKind() {
-    return kind;
+  public TokenType getType() {
+    return type;
   }
+
 
   /**
    * Return the unique symbol associated with a string.
    * Repeated calls to <tt>symbol("abc")</tt> will return the same Symbol.
    */
-  public static Symbol symbol( String newTokenString, Tokens kind ) {
+  public static Symbol put( String newTokenString, TokenType type ) {
     Symbol s = symbols.get( newTokenString );
     if( s == null ) {
-      if( kind == Tokens.BogusToken ) {
+      if( type.equals( TokenType.BogusToken ) ) {
         // bogus string so don't enter into symbols
         return null;
       }
-      // System.out.println( "new symbol: " + u + " Kind: " + kind );
-      s = new Symbol( newTokenString, kind );
+      s = new Symbol( newTokenString, type );
       symbols.put( newTokenString, s );
     }
 

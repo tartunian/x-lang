@@ -18,7 +18,7 @@ public class Compiler {
 	
 	String sourceFile;
 	
-    public Compiler(String sourceFile) {
+    public Compiler( String sourceFile ) {
     	this.sourceFile = sourceFile;
     }
     
