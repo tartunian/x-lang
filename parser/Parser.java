@@ -3,6 +3,7 @@ package parser;
 import java.util.*;
 import lexer.*;
 import ast.*;
+import visitor.PrintVisitor;
 
 /**
  * The Parser class performs recursive-descent parsing; as a by-product it will
@@ -56,12 +57,12 @@ public class Parser {
 
     private Token currentToken;
     private Lexer lexer;
-    private EnumSet<Tokens> relationalOps
-            = EnumSet.of(Tokens.Equal, Tokens.NotEqual, Tokens.Less, Tokens.LessEqual);
-    private EnumSet<Tokens> addingOps
-            = EnumSet.of(Tokens.Plus, Tokens.Minus, Tokens.Or);
-    private EnumSet<Tokens> multiplyingOps
-            = EnumSet.of(Tokens.Multiply, Tokens.Divide, Tokens.And);
+    private EnumSet<TokenType> relationalOps
+            = EnumSet.of(TokenType.Equal, TokenType.NotEqual, TokenType.Less, TokenType.LessEqual);
+    private EnumSet<TokenType> addingOps
+            = EnumSet.of(TokenType.Plus, TokenType.Minus, TokenType.Or);
+    private EnumSet<TokenType> multiplyingOps
+            = EnumSet.of(TokenType.Multiply, TokenType.Divide, TokenType.And);
 
     /**
      * Construct a new Parser;
@@ -107,11 +108,11 @@ public class Parser {
      * @return the program tree
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rProgram() throws SyntaxError {
+    public AST rProgram() throws LexicalException, SyntaxError {
         // note that rProgram actually returns a ProgramTree; we use the 
         // principle of substitutability to indicate it returns an AST
         AST t = new ProgramTree();
-        expect( Tokens.Program );
+        expect( TokenType.Program );
         t.addChild( rBlock() );
         return t;
     }
@@ -126,8 +127,8 @@ public class Parser {
      * @exception SyntaxError - thrown for any syntax error e.g. an expected
      * left brace isn't found
      */
-    public AST rBlock() throws SyntaxError {
-        expect( Tokens.LeftBrace );
+    public AST rBlock() throws LexicalException, SyntaxError {
+        expect( TokenType.LeftBrace );
         AST t = new BlockTree();
         while ( startingDecl() ) {  // get decls
                 t.addChild( rDecl() );
@@ -135,20 +136,20 @@ public class Parser {
         while ( startingStatement() ) {  // get statements
                 t.addChild( rStatement() );
         }
-        expect( Tokens.RightBrace );
+        expect( TokenType.RightBrace );
         return t;
     }
 
     boolean startingDecl() {
-        if (isNextTok(Tokens.Int) || isNextTok(Tokens.BOOLean)) {
+        if (isNextTok(TokenType.Int) || isNextTok(TokenType.BOOLean)) {
             return true;
         }
         return false;
     }
 
     boolean startingStatement() {
-        if (isNextTok(Tokens.If) || isNextTok(Tokens.While) || isNextTok(Tokens.Return)
-                || isNextTok(Tokens.LeftBrace) || isNextTok(Tokens.Identifier)) {
+        if (isNextTok(TokenType.If) || isNextTok(TokenType.While) || isNextTok(TokenType.Return)
+                || isNextTok(TokenType.LeftBrace) || isNextTok(TokenType.Identifier)) {
             return true;
         }
         return false;
@@ -163,11 +164,11 @@ public class Parser {
      * @return either the decl tree or the functionDecl tree
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rDecl() throws SyntaxError {
+    public AST rDecl() throws LexicalException, SyntaxError {
         AST t, t1;
         t = rType();
         t1 = rName();
-        if (isNextTok(Tokens.LeftParen)) { // function
+        if (isNextTok(TokenType.LeftParen)) { // function
             t = (new FunctionDeclTree()).addChild(t).addChild(t1);
             t.addChild(rFunHead());
             t.addChild(rBlock());
@@ -186,13 +187,13 @@ public class Parser {
      * @return either the intType or boolType tree
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rType() throws SyntaxError {
+    public AST rType() throws LexicalException, SyntaxError {
         AST t;
-        if (isNextTok(Tokens.Int)) {
+        if (isNextTok(TokenType.Int)) {
             t = new IntTypeTree();
             scan();
         } else {
-            expect(Tokens.BOOLean);
+            expect(TokenType.BOOLean);
             t = new BoolTypeTree();
         }
         return t;
@@ -208,20 +209,20 @@ public class Parser {
      * @return the formals tree describing this list of formals
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rFunHead() throws SyntaxError {
+    public AST rFunHead() throws LexicalException, SyntaxError {
         AST t = new FormalsTree();
-        expect(Tokens.LeftParen);
-        if (!isNextTok(Tokens.RightParen)) {
+        expect(TokenType.LeftParen);
+        if (!isNextTok(TokenType.RightParen)) {
             do {
                 t.addChild(rDecl());
-                if (isNextTok(Tokens.Comma)) {
+                if (isNextTok(TokenType.Comma)) {
                     scan();
                 } else {
                     break;
                 }
             } while (true);
         }
-        expect(Tokens.RightParen);
+        expect(TokenType.RightParen);
         return t;
     }
 
@@ -235,37 +236,37 @@ public class Parser {
      * @return the tree corresponding to the statement found
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rStatement() throws SyntaxError {
+    public AST rStatement() throws LexicalException, SyntaxError {
         AST t;
-        if (isNextTok(Tokens.If)) {
+        if (isNextTok(TokenType.If)) {
             scan();
             t = new IfTree();
             t.addChild(rExpr());
-            expect(Tokens.Then);
+            expect(TokenType.Then);
             t.addChild(rBlock());
-            expect(Tokens.Else);
+            expect(TokenType.Else);
             t.addChild(rBlock());
             return t;
         }
-        if (isNextTok(Tokens.While)) {
+        if (isNextTok(TokenType.While)) {
             scan();
             t = new WhileTree();
             t.addChild(rExpr());
             t.addChild(rBlock());
             return t;
         }
-        if (isNextTok(Tokens.Return)) {
+        if (isNextTok(TokenType.Return)) {
             scan();
             t = new ReturnTree();
             t.addChild(rExpr());
             return t;
         }
-        if (isNextTok(Tokens.LeftBrace)) {
+        if (isNextTok(TokenType.LeftBrace)) {
             return rBlock();
         }
         t = rName();
         t = (new AssignTree()).addChild(t);
-        expect(Tokens.Assign);
+        expect(TokenType.Assign);
         t.addChild(rExpr());
         return t;
     }
@@ -278,7 +279,7 @@ public class Parser {
      *
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rExpr() throws SyntaxError {
+    public AST rExpr() throws LexicalException, SyntaxError {
         AST t, kid = rSimpleExpr();
         t = getRelationTree();
         if (t == null) {
@@ -300,7 +301,7 @@ public class Parser {
      * @return the tree corresponding to the adding expression
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rSimpleExpr() throws SyntaxError {
+    public AST rSimpleExpr() throws LexicalException, SyntaxError {
         AST t, kid = rTerm();
         while ((t = getAddOperTree()) != null) {
             t.addChild(kid);
@@ -321,7 +322,7 @@ public class Parser {
      * @return the tree corresponding to the multiplying expression
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rTerm() throws SyntaxError {
+    public AST rTerm() throws LexicalException, SyntaxError {
         AST t, kid = rFactor();
         while ((t = getMultOperTree()) != null) {
             t.addChild(kid);
@@ -341,36 +342,36 @@ public class Parser {
      * @return the tree corresponding to the factor expression
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rFactor() throws SyntaxError {
+    public AST rFactor() throws LexicalException, SyntaxError {
         AST t;
-        if (isNextTok(Tokens.LeftParen)) { // -> (e)
+        if (isNextTok(TokenType.LeftParen)) { // -> (e)
             scan();
             t = rExpr();
-            expect(Tokens.RightParen);
+            expect(TokenType.RightParen);
             return t;
         }
-        if (isNextTok(Tokens.INTeger)) {  //  -> <int>
+        if (isNextTok(TokenType.INTeger)) {  //  -> <int>
             t = new IntTree(currentToken);
             scan();
             return t;
         }
         t = rName();
-        if (!isNextTok(Tokens.LeftParen)) {  //  -> name
+        if (!isNextTok(TokenType.LeftParen)) {  //  -> name
             return t;
         }
         scan();     // -> name '(' (e list ',')? ) ==> call
         t = (new CallTree()).addChild(t);
-        if (!isNextTok(Tokens.RightParen)) {
+        if (!isNextTok(TokenType.RightParen)) {
             do {
                 t.addChild(rExpr());
-                if (isNextTok(Tokens.Comma)) {
+                if (isNextTok(TokenType.Comma)) {
                     scan();
                 } else {
                     break;
                 }
             } while (true);
         }
-        expect(Tokens.RightParen);
+        expect(TokenType.RightParen);
         return t;
     }
 
@@ -383,18 +384,18 @@ public class Parser {
      * @return the id tree
      * @exception SyntaxError - thrown for any syntax error
      */
-    public AST rName() throws SyntaxError {
+    public AST rName() throws LexicalException, SyntaxError {
         AST t;
-        if (isNextTok(Tokens.Identifier)) {
+        if (isNextTok(TokenType.Identifier)) {
             t = new IdTree(currentToken);
             scan();
             return t;
         }
-        throw new SyntaxError(currentToken, Tokens.Identifier);
+        throw new SyntaxError(currentToken, TokenType.Identifier);
     }
 
-    AST getRelationTree() {  // build tree with current token's relation
-        Tokens kind = currentToken.getKind();
+    AST getRelationTree() throws LexicalException {  // build tree with current token's relation
+        TokenType kind = currentToken.getType();
         if (relationalOps.contains(kind)) {
             AST t = new RelOpTree(currentToken);
             scan();
@@ -404,8 +405,8 @@ public class Parser {
         }
     }
 
-    private AST getAddOperTree() {
-        Tokens kind = currentToken.getKind();
+    private AST getAddOperTree() throws LexicalException {
+        TokenType kind = currentToken.getType();
         if (addingOps.contains(kind)) {
             AST t = new AddOpTree(currentToken);
             scan();
@@ -415,8 +416,8 @@ public class Parser {
         }
     }
 
-    private AST getMultOperTree() {
-        Tokens kind = currentToken.getKind();
+    private AST getMultOperTree() throws LexicalException {
+        TokenType kind = currentToken.getType();
         if (multiplyingOps.contains(kind)) {
             AST t = new MultOpTree(currentToken);
             scan();
@@ -426,14 +427,11 @@ public class Parser {
         }
     }
 
-    private boolean isNextTok( Tokens kind ) {
-        if ( (currentToken == null ) || ( currentToken.getKind() != kind ) ) {
-            return false;
-        }
-        return true;
+    private boolean isNextTok( TokenType type ) {
+        return ( currentToken == null || currentToken.getType() != type ) ? false : true;
     }
 
-    private void expect( Tokens kind ) throws SyntaxError {
+    private void expect( TokenType kind ) throws LexicalException, SyntaxError {
         if ( isNextTok( kind ) ) {
             scan();
             return;
@@ -441,21 +439,26 @@ public class Parser {
         throw new SyntaxError( currentToken, kind );
     }
 
-    private void scan() {
+    private void scan() throws LexicalException {
         currentToken = lexer.nextToken();
-        if (currentToken != null) {
-            currentToken.print();   // debug printout
+        if ( currentToken != null && currentToken.getType() != TokenType.EndProgram ) {
+            System.out.println( currentToken );
         }
         return;
     }
 
     public static void main( String args[] ) {
         String sourceFile = args[0];
-        Parser p;
+        Parser parser;
 
         try {
-            p = new Parser( sourceFile );
-            p.execute();
+            parser = new Parser( sourceFile );
+            AST tree = parser.execute();
+
+            System.out.println();
+            System.out.println( "---------------AST-------------" );
+
+            new PrintVisitor().print( "Program" , tree);
         } catch ( Exception e ) {
         }
     }

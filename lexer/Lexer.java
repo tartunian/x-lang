@@ -12,6 +12,8 @@ import java.io.IOException;
  *  are space, tab, newlines
  */
 public class Lexer {
+  private final char StringTerminator = '\"';
+  private final char CharTerminator = '\'';
   private boolean atEOF = false;
   // next character to process
   private char currentCharacter;
@@ -26,7 +28,7 @@ public class Lexer {
    */
   public Lexer( String sourceFile ) throws IOException {
     // init token table
-    new TokenType();
+    new TokenStore();
     source = new SourceReader( sourceFile );
     currentCharacter = source.read();
   }
@@ -55,7 +57,7 @@ public class Lexer {
       currentCharacter = source.read();
     } while ( Character.isJavaIdentifierPart( currentCharacter ) );
 
-    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( id, Tokens.Identifier ) );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( id, TokenType.Identifier ) );
   }
 
   private Token getKeywordToken() throws IOException {
@@ -80,36 +82,30 @@ public class Lexer {
       currentCharacter = source.read();
     } while( Character.isDigit( currentCharacter ) );
 
-    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( number, Tokens.INTeger ) );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( number, TokenType.INTeger ) );
   }
 
   private Token getStringLiteralToken() throws IOException, LexicalException {
     String word = "";
-    int startingLineNumber = source.getLineNumber();
 
     do {
       word += currentCharacter;
       currentCharacter = source.read();
       endPosition++;
-      if( source.isAtEndOfLine() && currentCharacter != '\"' ) {
+      if( source.isAtEndOfLine() && currentCharacter != StringTerminator ) {
         throw new LexicalException( String.format( "******** illegal characters: %s", word ) );
-        /*System.out.println( String.format( "******** illegal characters: %s", word ) );
-        errorLineNumber = startingLineNumber;
-        word += '\"';
-        return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( word, Tokens.StringLit ) );*/
       }
-    } while ( currentCharacter != '\"' );
+    } while ( currentCharacter != StringTerminator );
 
     currentCharacter = source.read();
     endPosition++;
-    word += "\"";
+    word += StringTerminator;
 
-    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( word, Tokens.StringLit ) );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( word, TokenType.StringLit ) );
   }
 
   private Token getCharacterLiteralToken() throws IOException, LexicalException {
     String c = "";
-    int startingLineNumber = source.getLineNumber();
 
     c += currentCharacter;
 
@@ -121,19 +117,16 @@ public class Lexer {
     currentCharacter = source.read();
     endPosition++;
 
-    if( currentCharacter != '\'' ) {
+    if( currentCharacter != CharTerminator ) {
       throw new LexicalException( String.format( "******** illegal characters: %s", c ) );
-      /*System.out.println( String.format( "******** illegal characters: %s", c ) );
-      c += '\'';
-      return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( c, Tokens.CharLit ) );*/
     }
 
     currentCharacter = source.read();
     endPosition++;
 
-    c += '\'';
+    c += CharTerminator;
 
-    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( c, Tokens.CharLit ) );
+    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put( c, TokenType.CharLit ) );
   }
 
   private Token getTwoCharToken() throws IOException, LexicalException {
@@ -147,14 +140,11 @@ public class Lexer {
       consumeComments();
     }
 
-    Symbol sym = Symbol.put( twoCharToken, Tokens.BogusToken );
+    Symbol sym = Symbol.put( twoCharToken, TokenType.BogusToken );
     if ( sym == null ) {
-      sym = Symbol.put( Character.toString( firstCharacter ), Tokens.BogusToken );
+      sym = Symbol.put( Character.toString( firstCharacter ), TokenType.BogusToken );
       if ( sym == null ) {
         throw new LexicalException( "******** illegal character: " + firstCharacter );
-        /*System.out.println( "******** illegal character: " + firstCharacter );
-        atEOF = true;
-        return nextToken();*/
       } else {
         return new Token( source.getLineNumber(), startPosition, endPosition, sym );
       }
@@ -163,12 +153,9 @@ public class Lexer {
       endPosition++;
       currentCharacter = source.read();
 
-      sym = Symbol.put( twoCharToken, Tokens.BogusToken );
+      sym = Symbol.put( twoCharToken, TokenType.BogusToken );
       if ( sym == null ) {
         throw new LexicalException( "******** illegal character: " + twoCharToken );
-        /*System.out.println( "******** illegal character: " + twoCharToken );
-        atEOF = true;
-        return nextToken();*/
       } else {
         return new Token( source.getLineNumber(), startPosition, endPosition, sym );
       }
@@ -176,7 +163,7 @@ public class Lexer {
   }
 
   private Token getEndOfFileToken() {
-    return new Token( source.getLineNumber(), startPosition, endPosition, Symbol.put("XD", Tokens.EndProgram ) );
+    return new Token( source.getLineNumber(), startPosition, endPosition, TokenStore.getSymbolByTokenType( TokenType.EndProgram ) );
   }
 
   /**
@@ -190,9 +177,9 @@ public class Lexer {
         return getIdentifierToken();
       } else if ( Character.isLetter( currentCharacter ) ) {
         return getKeywordToken();
-      } else if ( currentCharacter == '\"') {
+      } else if ( currentCharacter == StringTerminator ) {
         return getStringLiteralToken();
-      } else if ( currentCharacter == '\'' ) {
+      } else if ( currentCharacter == CharTerminator ) {
         return getCharacterLiteralToken();
       } else if ( Character.isDigit( currentCharacter ) ) {
         return getNumberToken();
@@ -216,7 +203,7 @@ public class Lexer {
       lexer = new Lexer( sourceFile );
       Token token;
 
-      while( ( token = lexer.nextToken() ).getKind() != Tokens.EndProgram ) {
+      while( ( token = lexer.nextToken() ).getType() != TokenType.EndProgram ) {
         System.out.println( token );
       }
 

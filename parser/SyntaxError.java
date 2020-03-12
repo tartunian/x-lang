@@ -1,7 +1,7 @@
 package parser;
 
 import lexer.Token;
-import lexer.Tokens;
+import lexer.TokenType;
 
 class SyntaxError extends Exception {
 
@@ -13,7 +13,7 @@ class SyntaxError extends Exception {
    *
    */
   private Token tokenFound;
-  private Tokens kindExpected;
+  private TokenType kindExpected;
 
   /**
    * record the syntax error just encountered
@@ -22,7 +22,7 @@ class SyntaxError extends Exception {
    * @param kindExpected is the token we expected to find based on the current
    * context
    */
-  public SyntaxError(Token tokenFound, Tokens kindExpected) {
+  public SyntaxError(Token tokenFound, TokenType kindExpected) {
     this.tokenFound = tokenFound;
     this.kindExpected = kindExpected;
   }
