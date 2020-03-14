@@ -50,8 +50,8 @@ public class PrintVisitor extends ASTVisitor {
         if ( lab.length() > 0 ) {
             s += "  Label: "+t.getLabel();
         }
-        if (t.getClass() == IdTree.class) {
-            int offset = ((IdTree)t).getFrameOffset();
+        if (t.getClass() == IdentifierTree.class) {
+            int offset = ((IdentifierTree)t).getFrameOffset();
             if (offset >= 0) {
                 s += "  Addr: " + offset;
             }
@@ -67,17 +67,33 @@ public class PrintVisitor extends ASTVisitor {
     public Object visitFunctionDeclTree(AST t) { print("FunctionDecl",t);  return null; }
     public Object visitCallTree(AST t) { print("Call",t);  return null; }
     public Object visitDeclTree(AST t) { print("Decl",t);  return null; }
+
+    // Type Trees
     public Object visitIntTypeTree(AST t) { print("IntType",t);  return null; }
     public Object visitBoolTypeTree(AST t) { print("BoolType",t);  return null; }
+    public Object visitStringTypeTree(AST t) { print("StringType",t);  return null; }
+    public Object visitCharTypeTree(AST t) { print("CharType",t);  return null; }
+
+    // Literal Trees
+    public Object visitStringTree(AST t) { print("String",t);  return null; }
+    public Object visitCharTree(AST t) { print("Char",t);  return null; }
+
     public Object visitFormalsTree(AST t) { print("Formals",t);  return null; }
     public Object visitActualArgsTree(AST t) { print("ActualArgs",t);  return null; }
     public Object visitIfTree(AST t) { print("If",t);  return null; }
+    public Object visitUnlessTree(AST t) { print("Unless",t);  return null; }
     public Object visitWhileTree(AST t) { print("While",t);  return null; }
     public Object visitReturnTree(AST t) { print("Return",t);  return null; }
+
+    public Object visitSwitchStatementTree(AST t) { print("SwitchStatement", t ); return null; };
+    public Object visitSwitchBlockTree(AST t) { print("SwitchBlock", t ); return null; };
+    public Object visitCaseStatementTree(AST t) { print("CaseStatement", t ); return null; };
+    public Object visitDefaultStatementTree(AST t) { print("DefaultStatement", t ); return null; };
+
     public Object visitAssignTree(AST t) { print("Assign",t);  return null; }
     public Object visitIntTree(AST t) { print("Int: "+((IntTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitIdTree(AST t) { print("Id: "+((IdTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitRelOpTree(AST t) { print("RelOp: "+((RelOpTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitAddOpTree(AST t) { print("AddOp: "+((AddOpTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitMultOpTree(AST t) { print("MultOp: "+((MultOpTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitIdTree(AST t) { print("Id: "+((IdentifierTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitRelOpTree(AST t) { print("RelOp: "+((RelationalOperatorTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitAddOpTree(AST t) { print("AddOp: "+((AdditionOperationTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitMultOpTree(AST t) { print("MultOp: "+((MultiplicationOperationTree)t).getSymbol().toString(),t);  return null; }
 }

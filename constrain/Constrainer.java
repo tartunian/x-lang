@@ -66,7 +66,7 @@ public class Constrainer extends ASTVisitor {
  *  t is an IdTree; retrieve the pointer to its declaration
 */
     private AST lookup(AST t) {  
-        return (AST)(symtab.get( ((IdTree)t).getSymbol()));
+        return (AST)(symtab.get( ((IdentifierTree)t).getSymbol()));
     }
 
 /**
@@ -77,7 +77,7 @@ public class Constrainer extends ASTVisitor {
         System.out.println("enter: "+((IdTree)t).getSymbol().toString()
               + ": " + decoration.getNodeNum());
 */
-        symtab.put( ((IdTree)t).getSymbol(), decoration);
+        symtab.put( ((IdentifierTree)t).getSymbol(), decoration);
     }
 
 /**
@@ -106,15 +106,15 @@ public class Constrainer extends ASTVisitor {
 */
     private void buildIntrinsicTrees() {
         Lexer lex = parser.getLexer();
-        trueTree = new IdTree(lex.newIdToken("true",-1,-1, -1));
-        falseTree = new IdTree(lex.newIdToken("false",-1,-1, -1));
-        readId = new IdTree(lex.newIdToken("read",-1,-1, -1));
-        writeId = new IdTree(lex.newIdToken("write",-1,-1, -1));
-        boolTree = (new DeclTree()).addChild(new BoolTypeTree()).
-          addChild(new IdTree(lex.newIdToken("<<bool>>",-1,-1, -1)));
+        trueTree = new IdentifierTree(lex.newIdToken("true",-1,-1, -1));
+        falseTree = new IdentifierTree(lex.newIdToken("false",-1,-1, -1));
+        readId = new IdentifierTree(lex.newIdToken("read",-1,-1, -1));
+        writeId = new IdentifierTree(lex.newIdToken("write",-1,-1, -1));
+        boolTree = (new DeclarationTree()).addChild(new BoolTypeTree()).
+          addChild(new IdentifierTree(lex.newIdToken("<<bool>>",-1,-1, -1)));
         decorate(boolTree.getChild(2),boolTree);
-        intTree = (new DeclTree()).addChild(new IntTypeTree()).
-          addChild(new IdTree(lex.newIdToken("<<int>>",-1,-1, -1)));
+        intTree = (new DeclarationTree()).addChild(new IntTypeTree()).
+          addChild(new IdentifierTree(lex.newIdToken("<<int>>",-1,-1, -1)));
         decorate(intTree.getChild(2),intTree);
         // to facilitate type checking; this ensures int decls and id decls
         // have the same structure
@@ -127,8 +127,8 @@ public class Constrainer extends ASTVisitor {
         // write tree takes one int parm and returns that value
         writeTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
           addChild(writeId);
-        AST decl = (new DeclTree()).addChild(new IntTypeTree()).
-          addChild(new IdTree(lex.newIdToken("dummyFormal",-1,-1, -1)));
+        AST decl = (new DeclarationTree()).addChild(new IntTypeTree()).
+          addChild(new IdentifierTree(lex.newIdToken("dummyFormal",-1,-1, -1)));
         AST formals = (new FormalsTree()).addChild(decl);
         writeTree.addChild(formals).addChild(new BlockTree());
         writeTree.accept(this);

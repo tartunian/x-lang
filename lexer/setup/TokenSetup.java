@@ -72,8 +72,9 @@ public class TokenSetup {
     table.println (" *  constants to their Symbols" );
     table.println ("*/" );
     table.println ("public class TokenStore {" );
-    table.println ("   public static java.util.HashMap<TokenType,Symbol> tokens = new java.util.HashMap<TokenType,Symbol>();" );
-    table.println ("   public TokenStore() {" );
+    table.println ("  private static java.util.HashMap<TokenType,Symbol> tokens = new java.util.HashMap<TokenType,Symbol>();" );
+    table.println ("  public static Symbol getSymbolByTokenType(TokenType type) { return tokens.get(type); }" );
+    table.println ("  public TokenStore() {" );
     symbols.println ("package lexer;" );
     symbols.println (" " );
     symbols.println ("/**" );
@@ -91,7 +92,7 @@ public class TokenSetup {
       String symType = "TokenType." + type;
 
       table.println(
-        "     tokens.put(" + symType  + ", Symbol.put(\"" +
+        "  tokens.put(" + symType  + ", Symbol.put(\"" +
         value + "\"," + symType + "));"
       );
 
