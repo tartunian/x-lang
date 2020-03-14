@@ -1,4 +1,4 @@
 ## x-lang
 
- - [ ] Lexer
+ - [x] Lexer
  - [ ] Parser
