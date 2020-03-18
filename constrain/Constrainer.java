@@ -86,7 +86,7 @@ public class Constrainer extends ASTVisitor {
  *  @return the intrinsic tree corresponding to the type of t
 */
     private AST getType(AST t) {
-        return (t.getClass() == IntTypeTree.class)? intTree: boolTree;
+        return ( t.getClass() == IntTypeTree.class ) ? intTree : boolTree;
     }
 
     public void decorate(AST t, AST decoration) {
@@ -105,17 +105,17 @@ public class Constrainer extends ASTVisitor {
  *  as any other AST
 */
     private void buildIntrinsicTrees() {
-        Lexer lex = parser.getLexer();
-        trueTree = new IdentifierTree(lex.newIdToken("true",-1,-1, -1));
-        falseTree = new IdentifierTree(lex.newIdToken("false",-1,-1, -1));
-        readId = new IdentifierTree(lex.newIdToken("read",-1,-1, -1));
-        writeId = new IdentifierTree(lex.newIdToken("write",-1,-1, -1));
+        Lexer lexer = parser.getLexer();
+        trueTree = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "true", TokenType.Identifier ) ) );
+        falseTree = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "false", TokenType.Identifier ) ) );
+        readId = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "read", TokenType.Identifier ) ) );
+        writeId = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "write", TokenType.Identifier ) ) );
         boolTree = (new DeclarationTree()).addChild(new BoolTypeTree()).
-          addChild(new IdentifierTree(lex.newIdToken("<<bool>>",-1,-1, -1)));
-        decorate(boolTree.getChild(2),boolTree);
+          addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "<<bool>>", TokenType.Identifier ) ) ) );
+        decorate( boolTree.getChild( 1 ), boolTree );
         intTree = (new DeclarationTree()).addChild(new IntTypeTree()).
-          addChild(new IdentifierTree(lex.newIdToken("<<int>>",-1,-1, -1)));
-        decorate(intTree.getChild(2),intTree);
+          addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "<<int>>", TokenType.Identifier ) ) ) );
+        decorate(intTree.getChild(1),intTree);
         // to facilitate type checking; this ensures int decls and id decls
         // have the same structure
         
@@ -125,12 +125,12 @@ public class Constrainer extends ASTVisitor {
           addChild(new BlockTree());
         
         // write tree takes one int parm and returns that value
-        writeTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).
+        writeTree = (new FunctionDeclTree()).addChild( new IntTypeTree() ).
           addChild(writeId);
-        AST decl = (new DeclarationTree()).addChild(new IntTypeTree()).
-          addChild(new IdentifierTree(lex.newIdToken("dummyFormal",-1,-1, -1)));
-        AST formals = (new FormalsTree()).addChild(decl);
-        writeTree.addChild(formals).addChild(new BlockTree());
+        AST decl = ( new DeclarationTree() ).addChild( new IntTypeTree() ).
+          addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "dummyFormal", TokenType.Identifier ) ) ) );
+        AST formals = ( new FormalsTree() ).addChild(decl);
+        writeTree.addChild(formals).addChild( new BlockTree() );
         writeTree.accept(this);
         readTree.accept(this);
     }
@@ -141,7 +141,7 @@ public class Constrainer extends ASTVisitor {
     public Object visitProgramTree(AST t) {
         buildIntrinsicTrees();
         this.t = t;
-        t.getChild(1).accept(this);
+        t.getChild(0).accept(this);
         return null;
     }
 
@@ -152,7 +152,7 @@ public class Constrainer extends ASTVisitor {
 */
     public Object visitBlockTree(AST t) {
         symtab.beginScope();
-        visitKids(t);
+        visitChildren(t);
         symtab.endScope();
         return null; }
         
@@ -161,16 +161,16 @@ public class Constrainer extends ASTVisitor {
  *  <ol><li>Enter the function name in the current scope, <li>enter the formals
  *  in the function scope and <li>constrain the body of the function</ol>
 */
-    public Object visitFunctionDeclTree(AST t) {
-        AST fname = t.getChild(2),
-            returnType = t.getChild(1),
-            formalsTree = t.getChild(3),
-            bodyTree = t.getChild(4);
+    public Object visitFunctionDeclarationTree(AST t) {
+        AST fname = t.getChild(1),
+            returnType = t.getChild(0),
+            formalsTree = t.getChild(2),
+            bodyTree = t.getChild(3);
         functions.push(t);
         enter(fname,t);  // enter function name in CURRENT scope
         decorate(returnType,getType(returnType));
         symtab.beginScope();  // new scope for formals and body
-        visitKids(formalsTree); // all formal names go in new scope
+        visitChildren(formalsTree); // all formal names go in new scope
         bodyTree.accept(this);
         symtab.endScope();
         functions.pop();
@@ -184,16 +184,16 @@ public class Constrainer extends ASTVisitor {
 */
     public Object visitCallTree(AST t) {
         AST fct,
-            fname = t.getChild(1),
+            fname = t.getChild(0),
             fctType;
-        visitKids(t);
+        visitChildren(t);
         fct = lookup(fname);
         if (fct.getClass() != FunctionDeclTree.class) {
             constraintError(ConstrainerErrors.CallingNonFunction);
         }
-        fctType = decoration(fct.getChild(1));
+        fctType = decoration(fct.getChild(0));
         decorate(t,fctType);
-        decorate(t.getChild(1),fct);
+        decorate(t.getChild(0),fct);
         // now check that the number/types of actuals match the
         // number/types of formals
         checkArgDecls(t,fct);
@@ -202,7 +202,7 @@ public class Constrainer extends ASTVisitor {
     
     private void checkArgDecls(AST caller, AST fct) {
         // check number and types of args/formals match
-        AST formals = fct.getChild(3);
+        AST formals = fct.getChild(2);
         Iterator<AST> actualKids = caller.getChildren().iterator(),
                     formalKids = formals.getChildren().iterator();
         actualKids.next();  // skip past fct name
@@ -210,8 +210,8 @@ public class Constrainer extends ASTVisitor {
             try {
                 AST actualDecl = decoration(actualKids.next()),
                     formalDecl = formalKids.next();
-                if (decoration(actualDecl.getChild(2)) !=
-                    decoration(formalDecl.getChild(2))) {
+                if (decoration(actualDecl.getChild(1)) !=
+                    decoration(formalDecl.getChild(1))) {
                     constraintError(ConstrainerErrors.ActualFormalTypeMismatch);
                 }
             } catch (Exception e) {
@@ -230,10 +230,10 @@ public class Constrainer extends ASTVisitor {
  *  variable in the current scope so later variable references can
  *  retrieve the information in this tree</ol>
 */
-    public Object visitDeclTree(AST t) {
-        AST idTree = t.getChild(2);
+    public Object visitDeclarationTree(AST t) {
+        AST idTree = t.getChild(1);
         enter(idTree,t);
-        AST typeTree = getType(t.getChild(1));
+        AST typeTree = getType(t.getChild(0));
         decorate(idTree,typeTree);
         return null; }
         
@@ -245,16 +245,21 @@ public class Constrainer extends ASTVisitor {
         if ( t.getChild(1).accept(this) != boolTree) {
             constraintError(ConstrainerErrors.BadConditional);
         }
+        t.getChild(1).accept(this);
         t.getChild(2).accept(this);
-        t.getChild(3).accept(this);
         return null;
     }
-        
+
+    @Override
+    public Object visitUnlessTree(AST t) {
+        return null;
+    }
+
     public Object visitWhileTree(AST t) {
-        if ( t.getChild(1).accept(this) != boolTree) {
+        if ( t.getChild(0).accept(this) != boolTree) {
             constraintError(ConstrainerErrors.BadConditional);
         }
-        t.getChild(2).accept(this);
+        t.getChild(1).accept(this);
         return null;
     }
         
@@ -269,29 +274,50 @@ public class Constrainer extends ASTVisitor {
         }
         AST currentFunction = (functions.peek());
         decorate(t,currentFunction);
-        AST returnType = decoration(currentFunction.getChild(1));
-        if ( (t.getChild(1).accept(this)) != returnType) {
+        AST returnType = decoration(currentFunction.getChild(0));
+        if ( (t.getChild(0).accept(this)) != returnType) {
             constraintError(ConstrainerErrors.BadReturnExpr);
         }
         return null;
     }
-        
-/**
+
+    @Override
+    public Object visitSwitchBlockTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitSwitchStatementTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitCaseStatementTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitDefaultStatementTree(AST t) {
+        return null;
+    }
+
+    /**
  *  Constrain the Assign tree:<br>
  *  be sure the types of the right-hand-side expression and variable
  *  match; when we constrain an expression we'll return a reference
  *  to the intrinsic type tree describing the type of the expression
 */
     public Object visitAssignTree(AST t) {
-        AST idTree = t.getChild(1),
+        AST idTree = t.getChild(0),
             idDecl = lookup(idTree),
             typeTree;
         decorate(idTree,idDecl);
-        typeTree = decoration(idDecl.getChild(2));
+        typeTree = decoration(idDecl.getChild(1));
         
         // now check that the types of the expr and id are the same
         // visit the expr tree and get back its type
-        if ( (t.getChild(2).accept(this)) != typeTree) {
+       Object o = t.getChild(1).accept(this);
+        if ( ! o.equals( typeTree ) ) {
             constraintError(ConstrainerErrors.BadAssignmentType);
         }
         return null;
@@ -302,15 +328,15 @@ public class Constrainer extends ASTVisitor {
         return intTree;
     }
         
-    public Object visitIdTree(AST t) {
+    public Object visitIdentifierTree(AST t) {
         AST decl = lookup(t);
         decorate(t,decl);
-        return decoration(decl.getChild(2));
+        return decoration(decl.getChild(1));
     }
         
-    public Object visitRelOpTree(AST t) {
-        AST leftOp = t.getChild(1),
-            rightOp = t.getChild(2);
+    public Object visitRelationalOperationTree(AST t) {
+        AST leftOp = t.getChild(0),
+            rightOp = t.getChild(1);
         if ( (AST)(leftOp.accept(this)) != (AST)(rightOp.accept(this)) ) {
             constraintError(ConstrainerErrors.TypeMismatchInExpr);
         }
@@ -325,9 +351,9 @@ public class Constrainer extends ASTVisitor {
  *  then the types must be a reference to the intTree
  *  @return the type of the tree
 */
-    public Object visitAddOpTree(AST t) {
-        AST leftOpType = (AST)(t.getChild(1).accept(this)),
-            rightOpType = (AST)(t.getChild(2).accept(this));
+    public Object visitAdditionOperationTree(AST t) {
+        AST leftOpType = (AST)(t.getChild(0).accept(this)),
+            rightOpType = (AST)(t.getChild(1).accept(this));
         if (leftOpType != rightOpType) {
             constraintError(ConstrainerErrors.TypeMismatchInExpr);
         }
@@ -335,14 +361,47 @@ public class Constrainer extends ASTVisitor {
         return leftOpType;
     }
         
-    public Object visitMultOpTree(AST t) {
-        return visitAddOpTree(t);
+    public Object visitMultiplicationOperationTree(AST t) {
+        return visitAdditionOperationTree(t);
     }
 
-    public Object visitIntTypeTree(AST t) {return null;}
-    public Object visitBoolTypeTree(AST t) {return null;}
+    public Object visitIntTypeTree(AST t) {
+        System.out.println( "IntTypeTree" );
+        return null;
+    
+    }
+    public Object visitBoolTypeTree(AST t) {
+        System.out.println( "BoolTypeTree" );
+        return null;
+    }
+
+    @Override
+    public Object visitStringTypeTree(AST t) {
+        System.out.println( "StringTypeTree" );
+        return null;
+    }
+
+    @Override
+    public Object visitCharTypeTree(AST t) {
+        
+        System.out.println( "CharTypeTree" );
+        return null;
+    }
+
+    @Override
+    public Object visitStringTree(AST t) {        
+        System.out.println( "StringTree" );
+        return null;
+    }
+
+    @Override
+    public Object visitCharTree(AST t) {
+        System.out.println( "CharTree" );
+        return null;
+    }
+
     public Object visitFormalsTree(AST t) {return null;}
-    public Object visitActualArgsTree(AST t) {return null;}
+    public Object visitActualArgumentsTree(AST t) {return null;}
     
     void constraintError(ConstrainerErrors err) {
         PrintVisitor v1 = new PrintVisitor();

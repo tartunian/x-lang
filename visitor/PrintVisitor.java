@@ -41,6 +41,8 @@ public class PrintVisitor extends ASTVisitor {
         String spaces = "";
         if (num < 100) spaces += " ";
         if (num < 10) spaces += " ";
+        // System.out.print( String.format( "%3d: ", num ) );
+        // System.out.print( spaces );
         System.out.print(num + ":" + spaces);
         printSpaces(indent);
         if (decNum != -1) {
@@ -58,15 +60,15 @@ public class PrintVisitor extends ASTVisitor {
         }
         System.out.println(s);
         indent += 2;
-        visitKids(t);
+        visitChildren(t);
         indent -= 2;
     }
 
     public Object visitProgramTree(AST t) { print("Program",t);  return null; }
     public Object visitBlockTree(AST t) { print("Block",t);  return null; }
-    public Object visitFunctionDeclTree(AST t) { print("FunctionDecl",t);  return null; }
+    public Object visitFunctionDeclarationTree(AST t) { print("FunctionDecl",t);  return null; }
     public Object visitCallTree(AST t) { print("Call",t);  return null; }
-    public Object visitDeclTree(AST t) { print("Decl",t);  return null; }
+    public Object visitDeclarationTree(AST t) { print("Decl",t);  return null; }
 
     // Type Trees
     public Object visitIntTypeTree(AST t) { print("IntType",t);  return null; }
@@ -79,7 +81,7 @@ public class PrintVisitor extends ASTVisitor {
     public Object visitCharTree(AST t) { print("Char",t);  return null; }
 
     public Object visitFormalsTree(AST t) { print("Formals",t);  return null; }
-    public Object visitActualArgsTree(AST t) { print("ActualArgs",t);  return null; }
+    public Object visitActualArgumentsTree(AST t) { print("ActualArgs",t);  return null; }
     public Object visitIfTree(AST t) { print("If",t);  return null; }
     public Object visitUnlessTree(AST t) { print("Unless",t);  return null; }
     public Object visitWhileTree(AST t) { print("While",t);  return null; }
@@ -92,8 +94,8 @@ public class PrintVisitor extends ASTVisitor {
 
     public Object visitAssignTree(AST t) { print("Assign",t);  return null; }
     public Object visitIntTree(AST t) { print("Int: "+((IntTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitIdTree(AST t) { print("Id: "+((IdentifierTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitRelOpTree(AST t) { print("RelOp: "+((RelationalOperatorTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitAddOpTree(AST t) { print("AddOp: "+((AdditionOperationTree)t).getSymbol().toString(),t);  return null; }
-    public Object visitMultOpTree(AST t) { print("MultOp: "+((MultiplicationOperationTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitIdentifierTree(AST t) { print("Id: "+((IdentifierTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitRelationalOperationTree(AST t) { print("RelOp: "+((RelationalOperationTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitAdditionOperationTree(AST t) { print("AddOp: "+((AdditionOperationTree)t).getSymbol().toString(),t);  return null; }
+    public Object visitMultiplicationOperationTree(AST t) { print("MultOp: "+((MultiplicationOperationTree)t).getSymbol().toString(),t);  return null; }
 }

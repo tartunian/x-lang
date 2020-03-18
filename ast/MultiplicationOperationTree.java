@@ -15,7 +15,7 @@ public class MultiplicationOperationTree extends AST {
     }
 
     public Object accept(ASTVisitor v) {
-        return v.visitMultOpTree(this);
+        return v.visitMultiplicationOperationTree(this);
     }
 
     public Symbol getSymbol() {

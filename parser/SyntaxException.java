@@ -5,16 +5,21 @@ import lexer.TokenType;
 
 class SyntaxException extends Exception {
 
-  public SyntaxException( String message ) {
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
+  public SyntaxException(String message) {
     super( message );
   }
 
-  public SyntaxException( Token currentToken, TokenType expectedType ) {
-    super( String.format( "Expected %s but got %s", expectedType.name(), currentToken.getType().name() ) );
+  public SyntaxException( int lineNumber, Token currentToken, TokenType expectedType ) {
+    super( String.format( "Line %2d: Expected %s but got %s", lineNumber, expectedType.name(), currentToken.getType().name() ) );
   }
 
-  public SyntaxException( String expectedValue, String receivedValue ) {
-    super( String.format( "Expected %s but got %s", expectedValue, receivedValue ) );
+  public SyntaxException( int lineNumber, String expectedValue, String receivedValue ) {
+    super( String.format( "Line %2d: Expected %s but got %s", lineNumber, expectedValue, receivedValue ) );
   }
 
 }

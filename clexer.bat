@@ -1,1 +1,2 @@
-javac -d %cd%\out\production\assignment-2-lexer-spring-2020-tartunian lexer\*.java
+@echo off
+javac -d %cd%\out\production\x-lang lexer\*.java

@@ -16,7 +16,7 @@ public class IdentifierTree extends AST {
     }
 
     public Object accept(ASTVisitor v) {
-        return v.visitIdTree(this);
+        return v.visitIdentifierTree(this);
     }
 
     public Symbol getSymbol() {

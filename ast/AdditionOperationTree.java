@@ -12,7 +12,7 @@ public class AdditionOperationTree extends AST {
     }
 
     public Object accept(ASTVisitor v) {
-        return v.visitAddOpTree(this);
+        return v.visitAdditionOperationTree(this);
     }
 
     public Symbol getSymbol() {

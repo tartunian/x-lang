@@ -8,7 +8,7 @@ public class FunctionDeclTree extends AST {
     }
 
     public Object accept(ASTVisitor v) {
-        return v.visitFunctionDeclTree(this);
+        return v.visitFunctionDeclarationTree(this);
     }
 
 }

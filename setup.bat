@@ -1,1 +1,2 @@
-java -cp %cd%\out\production\assignment-2-lexer-spring-2020-tartunian lexer.setup.TokenSetup
+@echo off
+java -cp %cd%\out\production\x-lang lexer.setup.TokenSetup

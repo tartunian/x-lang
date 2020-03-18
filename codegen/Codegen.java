@@ -187,7 +187,7 @@ public class Codegen extends ASTVisitor {
 
         writeTree.setLabel(writeLabel);
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,writeLabel));
-        String formal = ((IdentifierTree)(writeTree.getChild(3).getChild(1).getChild(2))).
+        String formal = ((IdentifierTree)(writeTree.getChild(2).getChild(0).getChild(1))).
                                  getSymbol().toString();
         storeop(new VarOpcode(Codes.ByteCodes.LOAD,0,formal));
         // write has one actual arg - in frame offset 0
@@ -215,7 +215,7 @@ public class Codegen extends ASTVisitor {
         // branch over intrinsic bytecodes
         genIntrinsicCodes();
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,startLabel));
-        t.getChild(1).accept(this);
+        t.getChild(0).accept(this);
         storeop(new Code(Codes.ByteCodes.HALT));
         closeFrame();
         return null;
@@ -230,7 +230,7 @@ public class Codegen extends ASTVisitor {
     public Object visitBlockTree(AST t) {
         //System.out.println("visitBlockTree");
         openBlock();
-        visitKids(t);
+        visitChildren(t);
         storeop(new NumOpcode(Codes.ByteCodes.POP,getBlockSize()));
         // remove any local variables from runtime stack
         closeBlock();
@@ -247,11 +247,11 @@ public class Codegen extends ASTVisitor {
  *  LABEL continue
  *  </pre>
 */
-    public Object visitFunctionDeclTree(AST t) {
+    public Object visitFunctionDeclarationTree(AST t) {
         //System.out.println("visitFunctionDeclTree");
-        AST name = t.getChild(2),
-            formals = t.getChild(3),
-            block = t.getChild(4);
+        AST name = t.getChild(1),
+            formals = t.getChild(2),
+            block = t.getChild(3);
         String funcName = ((IdentifierTree)name).getSymbol().toString();
         String funcLabel = newLabel(funcName);
         t.setLabel(funcLabel);
@@ -261,7 +261,7 @@ public class Codegen extends ASTVisitor {
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,funcLabel));
         // now record the frame offsets for the formals
         for (AST decl : formals.getChildren()) {
-            IdentifierTree id = (IdentifierTree)(decl.getChild(2));
+            IdentifierTree id = (IdentifierTree)(decl.getChild(1));
             id.setFrameOffset(frameSize());
             decl.setLabel(id.getSymbol().toString());
             changeFrame(1);  // ensure frame size includes space for variables
@@ -285,10 +285,10 @@ public class Codegen extends ASTVisitor {
 */
     public Object visitCallTree(AST t) {
         //System.out.println("visitCallTree");
-        String funcName = ((IdentifierTree)t.getChild(1)).getDecoration().getLabel();
+        String funcName = ((IdentifierTree)t.getChild(0)).getDecoration().getLabel();
         int numArgs = t.getChildCount() - 1;
-        for (int kid = 2; kid <= t.getChildCount(); kid++) {
-            t.getChild(kid).accept(this);
+        for (int child = 1; child < t.getChildCount(); child++) {
+            t.getChild(child).accept(this);
         }
         storeop(new NumOpcode(Codes.ByteCodes.ARGS,numArgs));
         //used to set up new frame
@@ -303,9 +303,9 @@ public class Codegen extends ASTVisitor {
  *  record the frame offset of this variable for future references
  *  </pre>
 */
-    public Object visitDeclTree(AST t) {
+    public Object visitDeclarationTree(AST t) {
         //System.out.println("visitDeclTree");
-        IdentifierTree id = (IdentifierTree)t.getChild(2);
+        IdentifierTree id = (IdentifierTree)t.getChild(1);
         String idLabel = id.getSymbol().toString();
         t.setLabel(idLabel);  //set label in dcln node
         id.setFrameOffset(frameSize());
@@ -322,11 +322,31 @@ public class Codegen extends ASTVisitor {
         //System.out.println("visitBoolTypeTree");
         return null; }
 
+    @Override
+    public Object visitStringTypeTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitCharTypeTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitStringTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitCharTree(AST t) {
+        return null;
+    }
+
     public Object visitFormalsTree(AST t) {
         //System.out.println("visitFormalsTree");
         return null; }
 
-    public Object visitActualArgsTree(AST t) {
+    public Object visitActualArgumentsTree(AST t) {
         //System.out.println("visitActualArgsTree");
         return null; }
 
@@ -346,16 +366,21 @@ public class Codegen extends ASTVisitor {
         //System.out.println("visitIfTree");
         String elseLabel = newLabel("else"),
                continueLabel = newLabel("continue");
-        t.getChild(1).accept(this); // gen code for conditional expr
+        t.getChild(0).accept(this); // gen code for conditional expr
         storeop(new LabelOpcode(Codes.ByteCodes.FALSEBRANCH,elseLabel));
-        t.getChild(2).accept(this);
+        t.getChild(1).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.GOTO,continueLabel));
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,elseLabel));
-        t.getChild(3).accept(this);
+        t.getChild(2).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,continueLabel));
         return null; }
 
-/** <pre>
+    @Override
+    public Object visitUnlessTree(AST t) {
+        return null;
+    }
+
+    /** <pre>
  *  Generate codes for the While tree:<br><br>
  *
  *  LABEL while
@@ -371,9 +396,9 @@ public class Codegen extends ASTVisitor {
         String continueLabel = newLabel("continue"),
                whileLabel = newLabel("while");
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,whileLabel));
-        t.getChild(1).accept(this);
+        t.getChild(0).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.FALSEBRANCH,continueLabel));
-        t.getChild(2).accept(this);
+        t.getChild(1).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.GOTO,whileLabel));
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,continueLabel));
         return null;
@@ -388,13 +413,33 @@ public class Codegen extends ASTVisitor {
 */
     public Object visitReturnTree(AST t) {
         //System.out.println("visitReturnTree");
-        t.getChild(1).accept(this);
+        t.getChild(0).accept(this);
         AST fct = t.getDecoration();
         storeop(new LabelOpcode(Codes.ByteCodes.RETURN,fct.getLabel()));
         return null;
     }
 
-/** <pre>
+    @Override
+    public Object visitSwitchBlockTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitSwitchStatementTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitCaseStatementTree(AST t) {
+        return null;
+    }
+
+    @Override
+    public Object visitDefaultStatementTree(AST t) {
+        return null;
+    }
+
+    /** <pre>
  *  Generate codes for the Assign tree:<br><br>
  *
  *  &LT;generate codes for the right-hand-side expression&GT;
@@ -403,10 +448,10 @@ public class Codegen extends ASTVisitor {
 */
     public Object visitAssignTree(AST t) {
         //System.out.println("visitAssignTree");
-        IdentifierTree id = (IdentifierTree)t.getChild(1);
+        IdentifierTree id = (IdentifierTree)t.getChild(0);
         String vname = id.getSymbol().toString();
-        int addr = ((IdentifierTree)(id.getDecoration().getChild(2))).getFrameOffset();
-        t.getChild(2).accept(this);
+        int addr = ((IdentifierTree)(id.getDecoration().getChild(1))).getFrameOffset();
+        t.getChild(1).accept(this);
         storeop(new VarOpcode(Codes.ByteCodes.STORE,addr,vname));
         return null;
     }
@@ -429,10 +474,10 @@ public class Codegen extends ASTVisitor {
  *  LOAD <i>offset</i>  -- load variable using the offset recorded in the AST
  *  </pre>
 */
-    public Object visitIdTree(AST t) {
+    public Object visitIdentifierTree(AST t) {
         //System.out.println("visitIdTree");
         AST decl = t.getDecoration();
-        int addr = ((IdentifierTree)(decl.getChild(2))).getFrameOffset();
+        int addr = ((IdentifierTree)(decl.getChild(1))).getFrameOffset();
         String vname = ((IdentifierTree)t).getSymbol().toString();
         storeop(new VarOpcode(Codes.ByteCodes.LOAD,addr,vname));
         return null;
@@ -446,11 +491,11 @@ public class Codegen extends ASTVisitor {
  *  BOP op    -- op is the indicated relational op
  *  </pre>
 */
-    public Object visitRelOpTree(AST t) {
+    public Object visitRelationalOperationTree(AST t) {
         //System.out.println("visitRelOpTree");
-        String op = ((RelationalOperatorTree)t).getSymbol().toString();
+        String op = ((RelationalOperationTree)t).getSymbol().toString();
+        t.getChild(0).accept(this);
         t.getChild(1).accept(this);
-        t.getChild(2).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.BOP,op));
         return null;
     }
@@ -463,11 +508,11 @@ public class Codegen extends ASTVisitor {
  *  BOP op    -- op is the indicated adding op
  *  </pre>
 */
-    public Object visitAddOpTree(AST t) {
+    public Object visitAdditionOperationTree(AST t) {
         //System.out.println("visitAddOpTree");
         String op = ((AdditionOperationTree)t).getSymbol().toString();
+        t.getChild(0).accept(this);
         t.getChild(1).accept(this);
-        t.getChild(2).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.BOP,op));
         return null;
     }
@@ -480,11 +525,11 @@ public class Codegen extends ASTVisitor {
  *  BOP op    -- op is the indicated multiplying op
  *  </pre>
 */
-    public Object visitMultOpTree(AST t) {
+    public Object visitMultiplicationOperationTree(AST t) {
         //System.out.println("visitMultOpTree");
         String op = ((MultiplicationOperationTree)t).getSymbol().toString();
+        t.getChild(0).accept(this);
         t.getChild(1).accept(this);
-        t.getChild(2).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.BOP,op));
         return null;
     }

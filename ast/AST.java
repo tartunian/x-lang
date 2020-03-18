@@ -42,10 +42,7 @@ public abstract class AST {
  *  @return the AST for the indicated kid
 */
     public AST getChild( int i ) {
-        if ( (i <= 0) || (i > getChildCount())) {
-            return null;
-        }
-        return children.get(i - 1);
+        return children.get( i );
     }
 
 /**

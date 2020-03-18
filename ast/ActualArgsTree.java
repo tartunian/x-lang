@@ -8,7 +8,7 @@ public class ActualArgsTree extends AST {
     }
 
     public Object accept(ASTVisitor v) {
-        return v.visitActualArgsTree(this);
+        return v.visitActualArgumentsTree(this);
     }
 
 }

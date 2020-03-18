@@ -2,6 +2,9 @@ package lexer;
 
 import java.io.IOException;
 
+import util.DebugOptions;
+import util.DebugOptions.Options;
+
 /**
  *  The Lexer class is responsible for scanning the source file
  *  which is a stream of characters and returning a stream of
@@ -12,10 +15,11 @@ import java.io.IOException;
  *  are space, tab, newlines
  */
 public class Lexer {
+
+  private DebugOptions debugOptions;
+
   private final char StringTerminator = '\"';
   private final char CharTerminator = '\'';
-  private boolean atEOF = false;
-  // next character to process
   private char currentCharacter;
   private SourceReader source;
 
@@ -27,10 +31,21 @@ public class Lexer {
    * @param sourceFile is the name of the File to read the program source from
    */
   public Lexer( String sourceFile ) throws IOException {
-    // init token table
+    this.debugOptions = new DebugOptions( Options.TOKENS, Options.SOURCECODE );
     new TokenStore();
-    source = new SourceReader( sourceFile );
+    source = new SourceReader( sourceFile, true );
     currentCharacter = source.read();
+  }
+
+  public Lexer( String sourceFile, DebugOptions debugOptions ) throws IOException {
+    this.debugOptions = debugOptions;
+    new TokenStore();
+    source = new SourceReader( sourceFile, debugOptions.contains( Options.TOKENS ) );
+    currentCharacter = source.read();
+  }
+
+  public SourceReader getSource() {
+    return source;
   }
 
   private void consumeComments() throws IOException {
@@ -70,7 +85,7 @@ public class Lexer {
     } while ( Character.isAlphabetic( currentCharacter ) );
 
     Symbol s = Symbol.getSymbolForKeywordString( word );
-    return new Token(source.getLineNumber(), startPosition, endPosition, s);
+    return new Token( source.getLineNumber(), startPosition, endPosition, s );
   }
 
   private Token getNumberToken() throws IOException {
@@ -169,26 +184,57 @@ public class Lexer {
   /**
    *  @return the next Token found in the source file
    */
-  public Token nextToken() throws LexicalException {
-
+  private Token nextToken() throws LexicalException {
+    Token token;
     try {
       consumeWhiteSpace();
       if ( Character.isJavaIdentifierStart( currentCharacter ) ) {
-        return getIdentifierToken();
+        token = getIdentifierToken();
       } else if ( Character.isLetter( currentCharacter ) ) {
-        return getKeywordToken();
+        token = getKeywordToken();
       } else if ( currentCharacter == StringTerminator ) {
-        return getStringLiteralToken();
+        token = getStringLiteralToken();
       } else if ( currentCharacter == CharTerminator ) {
-        return getCharacterLiteralToken();
+        token = getCharacterLiteralToken();
       } else if ( Character.isDigit( currentCharacter ) ) {
-        return getNumberToken();
+        token = getNumberToken();
       } else {
-        return getTwoCharToken();
+        token = getTwoCharToken();
       }
-    } catch ( IOException e ) { };
+    } catch ( IOException e ) {
+      token = getEndOfFileToken();
+    }
+    return token;
+  }
+  
+  public Token getNextToken() throws LexicalException {
+    Token token = nextToken();
+    if ( ! token.getType().equals( TokenType.EndProgram  ) ) {
+      if ( debugOptions.contains( Options.TOKENS ) ) {
+        System.out.println( token );
+      }
+    } else {
+      try {
+        System.out.println();
+        printSourceCode();
+      } catch( IOException e ){ }
+    }
+    return token;
+  }
 
-    return getEndOfFileToken();
+  private void processTokens() throws IOException, LexicalException {
+    while( ! ( getNextToken() ).getType().equals( TokenType.EndProgram ) );
+  }
+
+  public void printSourceCode() throws IOException {
+    if ( debugOptions.contains( Options.SOURCECODE ) ) {
+      source.reset();
+      String sourceCodeLine;
+      while( ( sourceCodeLine = source.readLine() ) != null ) {
+        String output = String.format( "%3d: %s", source.getLineNumber(), sourceCodeLine );
+        System.out.println( output );
+      }
+    }
   }
 
   /*
@@ -197,32 +243,14 @@ public class Lexer {
   public static void main( String args[] ) {
 
     String sourceFile = args[0];
-    Lexer lexer = null;
+    Lexer lexer;
 
     try {
       lexer = new Lexer( sourceFile );
-      Token token;
-
-      while( ( token = lexer.nextToken() ).getType() != TokenType.EndProgram ) {
-        System.out.println( token );
-      }
-
-    } catch ( LexicalException e ) {
-      System.out.println( e.getMessage() );
-    } catch ( IOException e ) {}
-
-    System.out.println();
-
-    try {
-      lexer.source.reset();
-
-      // Print out the full source code.
-      String sourceCodeLine;
-      while ( ( sourceCodeLine = lexer.source.readLine() ) != null ) {
-        String s = String.format( "%3d: %s", lexer.source.getLineNumber(), sourceCodeLine );
-        System.out.println( s );
-      }
-    } catch ( IOException e ) {}
+      lexer.processTokens();
+    } catch ( IOException | LexicalException e ) {
+      System.out.println( e );
+    }
 
   }
 

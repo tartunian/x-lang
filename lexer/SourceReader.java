@@ -1,7 +1,5 @@
 package lexer;
 
-import util.ErrorHandler;
-
 import java.io.*;
 
 /**
@@ -10,6 +8,8 @@ import java.io.*;
  * maintains the source column position of the character
  */
 public class SourceReader {
+  private boolean enableDebugOutput = false;
+
   private String sourceFile;
   private BufferedReader source;
   // line number of source program
@@ -26,11 +26,14 @@ public class SourceReader {
    * @param sourceFile the String describing the user's source file
    * @throws IOException is thrown if there is an I/O problem
    */
-  public SourceReader(String sourceFile) throws IOException {
-    System.out.println("Source file: " + sourceFile);
-    System.out.println("user.dir: " + System.getProperty("user.dir"));
+  public SourceReader( String sourceFile, boolean enableDebugOutput ) throws IOException {
+    this.enableDebugOutput = enableDebugOutput;
+    if( this.enableDebugOutput ) {
+      System.out.println("Source file: " + sourceFile);
+      System.out.println("user.dir: " + System.getProperty("user.dir"));
+    }
     this.sourceFile = sourceFile;
-    source = new BufferedReader(new FileReader(sourceFile));
+    source = new BufferedReader( new FileReader( sourceFile ) );
   }
 
   public void reset() throws IOException {
@@ -58,7 +61,7 @@ public class SourceReader {
       position = -1;
       nextLine = source.readLine();
 
-      if (nextLine != null) {
+      if ( nextLine != null && enableDebugOutput ) {
         System.out.println("READLINE:   " + nextLine);
       }
 
@@ -108,24 +111,4 @@ public class SourceReader {
     return position == nextLine.length();
   }
 
-/*
-  public static void main( String args[] ) {
-    SourceReader s = null;
-
-    try {
-      s = new SourceReader( "t" );
-
-      while( true ) {
-        char ch = s.read();
-        System.out.println(
-           "Char: " + ch + " Line: " + s.lineno + "position: " + s.position
-        );
-      }
-    } catch( Exception e ) {}
-
-    if( s != null ) {
-      s.close();
-    }
-  }
-*/
 }

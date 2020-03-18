@@ -1,4 +1,4 @@
-program {boolean j int i
+program { boolean j int i
   int factorial(int n) {
       if (n < 2) then 
          { return 1 }

@@ -1,11 +1,16 @@
 package parser;
 
+import java.io.IOException;
 import java.util.*;
 import lexer.*;
 import ast.*;
+import util.DebugOptions;
+import util.DebugOptions.Options;
 import visitor.PrintVisitor;
 
 public class Parser {
+
+  private DebugOptions debugOptions;
 
   private Token currentToken;
   private Lexer lexer;
@@ -34,16 +39,24 @@ public class Parser {
   }
 
   public AST execute() throws LexicalException, SyntaxException {
-    return getProgramTree();
+    AST tree = getProgramTree();
+    if( debugOptions.contains( Options.AST ) ) {
+      System.out.println();
+      printAST( tree );
+    }
+    return tree;
   }
 
-  public Parser( String sourceProgram ) throws Exception {
-    try {
-      lexer = new Lexer( sourceProgram );
-      scan();
-    } catch ( Exception e ) {
-      System.out.println( "********exception*******" + e.toString() );
-    };
+  public Parser( String sourceProgram ) throws IOException, LexicalException {
+    this.debugOptions = new DebugOptions( Options.AST, Options.TOKENS );
+    lexer = new Lexer( sourceProgram, debugOptions );
+    scan();
+  }
+
+  public Parser( String sourceProgram, DebugOptions debugOptions ) throws IOException, LexicalException {
+    this.debugOptions = debugOptions;
+    lexer = new Lexer( sourceProgram, debugOptions );
+    scan();
   }
 
   public AST getProgramTree() throws LexicalException, SyntaxException {
@@ -100,6 +113,7 @@ public class Parser {
       }
       case BOOLean: {
         t = new BoolTypeTree();
+        scan();
         return t;
       }
       case StringType: {
@@ -113,7 +127,7 @@ public class Parser {
         return t;
       }
       default: {
-        throw new SyntaxException( "Type or Literal", currentToken.getType().name() );
+        throw new SyntaxException( lexer.getSource().getLineNumber(), "Type or Literal", currentToken.getType().name() );
       }
     }
   }
@@ -198,7 +212,7 @@ public class Parser {
         return t;
       }
       default: {
-        throw new SyntaxException( "StartOfStatement", currentToken.getType().name() );
+        throw new SyntaxException( lexer.getSource().getLineNumber(), "StartOfStatement", currentToken.getType().name() );
       }
     }
   }
@@ -219,12 +233,14 @@ public class Parser {
   }
 
   public AST getCaseStatementTree() throws LexicalException, SyntaxException {
-    AST t = new CaseStatementTree();
+    AST t;
     if( currentTokenIsOfType( TokenType.Case ) ) {
+      t = new CaseStatementTree();
       scan();
       expect( TokenType.INTeger );
       t.addChild( getTypeTree() );
     } else {
+      t = new DefaultStatementTree();
       expect( TokenType.Default );
       scan();
     }
@@ -318,13 +334,13 @@ public class Parser {
       scan();
       return t;
     }
-    throw new SyntaxException( currentToken, TokenType.Identifier );
+    throw new SyntaxException( lexer.getSource().getLineNumber(), currentToken, TokenType.Identifier );
   }
 
   AST getRelationTree() throws LexicalException {
     TokenType type = currentToken.getType();
     if ( relationalOperators.contains( type ) ) {
-      AST t = new RelationalOperatorTree( currentToken );
+      AST t = new RelationalOperationTree( currentToken );
       scan();
       return t;
     } else {
@@ -359,33 +375,33 @@ public class Parser {
   }
 
   private void expect( TokenType type ) throws SyntaxException {
-    if( !currentTokenIsOfType( type ) ) {
-      throw new SyntaxException( currentToken, type );
+    if( ! currentTokenIsOfType( type ) ) {
+      throw new SyntaxException( lexer.getSource().getLineNumber(), currentToken, type );
     }
   }
 
   private void scan() throws LexicalException {
-    currentToken = lexer.nextToken();
-    if ( currentToken != null && currentToken.getType() != TokenType.EndProgram ) {
-      System.out.println( currentToken );
-    }
+    currentToken = lexer.getNextToken();
+  }
+
+  private void printAST( AST tree ) {
+    System.out.println("---------------AST-------------");
+    tree.accept( new PrintVisitor() );
   }
 
   public static void main( String args[] ) {
+
     String sourceFile = args[0];
     Parser parser;
 
     try {
-      parser = new Parser( sourceFile );
-      AST tree = parser.execute();
-
+      parser = new Parser( sourceFile, new DebugOptions( Options.SOURCECODE, Options.TOKENS, Options.AST ) );
+      parser.execute();
       System.out.println();
-      System.out.println( "---------------AST-------------" );
-
-      new PrintVisitor().print( "Program" , tree);
-    } catch ( Exception e ) {
+    } catch ( IOException | LexicalException | SyntaxException e ) {
       System.out.println( e );
     }
+
   }
 
 }
