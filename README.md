@@ -2,7 +2,7 @@
 The purpose of this project is to learn about the compilation process of programming languages by implementing one in Java.
 ## Completed Components
  - [x] Lexer
- - [ ] Parser
+ - [x] Parser
  - [ ] Constrainer
  - [ ] Compiler
  - [ ] Interpreter
