@@ -21,7 +21,7 @@ public class Program {
  *  print all of the bytecodes that have been generated
  *  @param outFile a String indicating where to print the bytecodes
 */
-    public void printCodes(String outFile) {
+    public void printCodes( String outFile ) {
         PrintWriter out = null;
         try {
              out = new PrintWriter(new FileOutputStream(outFile));

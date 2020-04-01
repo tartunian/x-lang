@@ -26,12 +26,11 @@ public class Compiler {
 
   void compileProgram() {
     try {
-      // System.out.println("---------------TOKENS-------------");
-      Parser parser = new Parser(sourceFile, new DebugOptions(Options.SOURCECODE, Options.AST));
+      Parser parser = new Parser(sourceFile, new DebugOptions( Options.SOURCECODE, Options.AST ) );
       AST t = parser.execute();
-      // System.out.println("---------------AST-------------");
+      //System.out.println("---------------AST-------------");
       PrintVisitor pv = new PrintVisitor();
-      // t.accept(pv);
+      //t.accept(pv);
       /* COMMENT CODE FROM HERE UNTIL THE CATCH CLAUSE WHEN TESTING PARSER */
       Constrainer con = new Constrainer(t, parser);
       con.execute();
@@ -49,15 +48,16 @@ public class Compiler {
       System.out.println("---------------INT/BOOL TREES-------------");
       Constrainer.intTree.accept(pv);
       Constrainer.boolTree.accept(pv);
+      System.out.println();
+      System.out.println("---------------BYTE CODE-------------");
       program.printCodes(sourceFile + ".cod");
       // if the source file is "abc" print bytecodes to abc.cod
-    } catch (Exception e) {
-      System.out.println("********exception*******" + e.toString());
-    }
-    ;
+      } catch (Exception e) {
+        System.out.println("********exception*******" + e.toString());
+      };
   }
 
-  public static void main(String args[]) {
+  public static void main(String args[]) throws Exception {
     if (args.length == 0) {
       System.out.println("***Incorrect usage, try: java compiler.Compiler <file>");
       System.exit(1);

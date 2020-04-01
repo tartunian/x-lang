@@ -21,7 +21,7 @@ public class Parser {
     EnumSet.of( TokenType.If, TokenType.While, TokenType.Return, TokenType.LeftBrace, TokenType.Identifier,
       TokenType.Switch, TokenType.Unless );
   private EnumSet<TokenType> relationalOperators =
-    EnumSet.of( TokenType.Equal, TokenType.NotEqual, TokenType.Less, TokenType.LessEqual );
+    EnumSet.of( TokenType.Greater, TokenType.GreaterEqual, TokenType.Equal, TokenType.NotEqual, TokenType.Less, TokenType.LessEqual );
   private EnumSet<TokenType> additionOperations =
     EnumSet.of( TokenType.Plus, TokenType.Minus, TokenType.Or );
   private EnumSet<TokenType> multiplicationOperations =
@@ -31,7 +31,8 @@ public class Parser {
     return startOfDeclaration.contains( currentToken.getType() );
   }
   private boolean nextTokenStartsStatement() {
-    return startOfStatement.contains( currentToken.getType() );
+    TokenType t = currentToken.getType();
+    return startOfStatement.contains( t );
   }
 
   public Lexer getLexer() {
@@ -49,13 +50,13 @@ public class Parser {
 
   public Parser( String sourceProgram ) throws IOException, LexicalException {
     this.debugOptions = new DebugOptions( Options.AST, Options.TOKENS );
-    lexer = new Lexer( sourceProgram, debugOptions );
+    lexer = new Lexer( sourceProgram, this.debugOptions );
     scan();
   }
 
   public Parser( String sourceProgram, DebugOptions debugOptions ) throws IOException, LexicalException {
     this.debugOptions = debugOptions;
-    lexer = new Lexer( sourceProgram, debugOptions );
+    lexer = new Lexer( sourceProgram, this.debugOptions );
     scan();
   }
 
@@ -170,9 +171,10 @@ public class Parser {
         expect( TokenType.Then );
         scan();
         t.addChild( getBlockTree() );
-        //expect( TokenType.Else );
-        //scan();
-        //t.addChild( getBlockTree() );
+        if( currentTokenIsOfType( TokenType.Else ) ) {
+          scan();
+          t.addChild( getBlockTree() );
+        }
         return t;
       }
       case While: {
@@ -193,13 +195,13 @@ public class Parser {
       }
       case Switch: {
         scan();
+        t = new SwitchStatementTree();
         expect( TokenType.LeftParen );
         scan();
         expect( TokenType.Identifier );
-        scan();
+        t.addChild( getIdentifierTree() );
         expect( TokenType.RightParen );
         scan();
-        t = new SwitchStatementTree();
         t.addChild( getSwitchBlockTree() );
         return t;
       }

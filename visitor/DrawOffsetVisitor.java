@@ -213,7 +213,7 @@ public class DrawOffsetVisitor extends ASTVisitor {
 
   @Override
   public Object visitReturnTree(AST t) {
-    draw( "While", t );
+    draw( "Return", t );
     return null;
   }
 

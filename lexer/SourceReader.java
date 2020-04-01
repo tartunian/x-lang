@@ -26,6 +26,7 @@ public class SourceReader {
    * @param sourceFile the String describing the user's source file
    * @throws IOException is thrown if there is an I/O problem
    */
+
   public SourceReader( String sourceFile, boolean enableDebugOutput ) throws IOException {
     this.enableDebugOutput = enableDebugOutput;
     if( this.enableDebugOutput ) {
@@ -34,6 +35,10 @@ public class SourceReader {
     }
     this.sourceFile = sourceFile;
     source = new BufferedReader( new FileReader( sourceFile ) );
+  }
+
+  public SourceReader( String sourceFile ) throws IOException {
+    this( sourceFile, true );
   }
 
   public void reset() throws IOException {

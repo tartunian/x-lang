@@ -373,7 +373,8 @@ public class Codegen extends ASTVisitor {
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,elseLabel));
         t.getChild(2).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,continueLabel));
-        return null; }
+        return null;
+    }
 
     @Override
     public Object visitUnlessTree(AST t) {
@@ -413,19 +414,24 @@ public class Codegen extends ASTVisitor {
 */
     public Object visitReturnTree(AST t) {
         //System.out.println("visitReturnTree");
-        t.getChild(0).accept(this);
+        t.getChild( 0 ).accept( this );
         AST fct = t.getDecoration();
         storeop(new LabelOpcode(Codes.ByteCodes.RETURN,fct.getLabel()));
         return null;
     }
 
     @Override
-    public Object visitSwitchBlockTree(AST t) {
+    public Object visitSwitchStatementTree(AST t) {
+        //AST id = t.getChild( 0 );
+
+        //id.accept( this );
+        //t.getChild( 1 ).accept( this );
         return null;
     }
 
     @Override
-    public Object visitSwitchStatementTree(AST t) {
+    public Object visitSwitchBlockTree(AST t) {
+        
         return null;
     }
 

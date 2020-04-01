@@ -12,5 +12,15 @@ LIT 0 i
 LIT 0 j
 LIT 0 s
 LIT 0 c
+GOTO continue<<3>>
+LABEL increment<<2>>
+LOAD 0 a
+LIT 1
+BOP +
+RETURN increment<<2>>
+POP 0
+LIT 0    GRATIS-RETURN-VALUE
+RETURN increment<<2>>
+LABEL continue<<3>>
 POP 5
 HALT

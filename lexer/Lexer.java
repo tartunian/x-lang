@@ -151,8 +151,9 @@ public class Lexer {
     currentCharacter = source.read();
     twoCharToken += currentCharacter;
 
-    if ( twoCharToken == "//" ) {
+    if ( twoCharToken.equals( TokenStore.getSymbolByTokenType( TokenType.Comment ).toString() ) ) {
       consumeComments();
+      return nextToken();
     }
 
     Symbol sym = Symbol.put( twoCharToken, TokenType.BogusToken );
@@ -187,7 +188,7 @@ public class Lexer {
   private Token nextToken() throws LexicalException {
     Token token;
     try {
-      consumeWhiteSpace();
+      consumeWhiteSpace();      
       if ( Character.isJavaIdentifierStart( currentCharacter ) ) {
         token = getIdentifierToken();
       } else if ( Character.isLetter( currentCharacter ) ) {
