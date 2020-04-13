@@ -3,7 +3,7 @@ package parser;
 import lexer.Token;
 import lexer.TokenType;
 
-class SyntaxException extends Exception {
+public class SyntaxException extends Exception {
 
   /**
    *

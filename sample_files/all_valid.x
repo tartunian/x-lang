@@ -1,9 +1,11 @@
 program { int i char c string s
-  i = s > c
-  i = c >= s
-  s = "valid string"
-  c = 'z'
+  //i = s > c
+  //i = c >= s
+  //s = "valid string"
+  //c = 'z'
 
+  i = 0
+  
   if(true) then {
     i = 1
   } else {
@@ -23,4 +25,5 @@ program { int i char c string s
     case 2: i = 5
     default: i = 42
   }
+  
 }

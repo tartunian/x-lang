@@ -1,12 +1,17 @@
 package compiler;
 
 import ast.*;
+import lexer.LexicalException;
 import parser.Parser;
+import parser.SyntaxException;
 import util.DebugOptions;
 import util.DebugOptions.Options;
 import constrain.Constrainer;
 import codegen.*;
 import visitor.*;
+
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 
 /**
  * The Compiler class contains the main program for compiling a source program
@@ -52,8 +57,8 @@ public class Compiler {
       System.out.println("---------------BYTE CODE-------------");
       program.printCodes(sourceFile + ".cod");
       // if the source file is "abc" print bytecodes to abc.cod
-      } catch (Exception e) {
-        System.out.println("********exception*******" + e.toString());
+      } catch ( IOException | LexicalException | SyntaxException e ) {
+        System.out.println( e );
       };
   }
 

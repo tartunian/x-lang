@@ -93,9 +93,10 @@ public class Table {
  /**
   * Gets the object associated with the specified symbol in the Table.
   */
-  public Object get(Symbol key) {
-	Binder e = symbols.get(key);
-	return e.getValue();
+  public Object get( Symbol key ) {
+    System.out.println( String.format( "    Table: Trying to access %s.", key.toString() ) );
+	  Binder e = symbols.get(key);
+	  return e.getValue();
   }
 
  /**
@@ -103,9 +104,10 @@ public class Table {
   * Maintain the list of symbols in the current scope (top);<br>
   * Add to list of symbols in prior scope with the same string identifier
   */
-  public void put(Symbol key, Object value) {
-	symbols.put(key, new Binder(value, top, symbols.get(key)));
-	top = key;
+  public void put( Symbol key, Object value ) {
+    System.out.println( String.format( "    Table: Trying to put %s.", key.toString() ) );
+    symbols.put( key, new Binder( value, top, symbols.get( key ) ) );
+    top = key;
   }
 
  /**
