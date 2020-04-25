@@ -1,0 +1,213 @@
+GOTO start<<1>>
+LABEL Read
+READ
+RETURN
+LABEL Write
+LOAD 0 dummyFormal
+WRITE
+RETURN
+LABEL start<<1>>
+
+LIT 0 a
+LIT 0 b
+LIT 0 c
+LIT 0 d
+GOTO continue<<3>>
+LABEL exponent<<2>>
+LIT 0 counter
+LIT 0 result
+LIT 1
+STORE 2 counter
+LOAD 0 base
+STORE 3 result
+LOAD 1 power
+LIT 0
+BOP ==
+FALSEBRANCH else<<4>>
+LIT 1
+RETURN exponent<<2>>
+POP 0
+GOTO continue<<5>>
+LABEL else<<4>>
+LABEL while<<7>>
+LOAD 2 counter
+LOAD 1 power
+BOP <
+FALSEBRANCH continue<<6>>
+LOAD 3 result
+LOAD 0 base
+BOP *
+STORE 3 result
+LOAD 2 counter
+LIT 1
+BOP +
+STORE 2 counter
+POP 0
+GOTO while<<7>>
+LABEL continue<<6>>
+POP 0
+LABEL continue<<5>>
+LOAD 3 result
+RETURN exponent<<2>>
+POP 2
+LIT 0    GRATIS-RETURN-VALUE
+RETURN exponent<<2>>
+LABEL continue<<3>>
+GOTO continue<<9>>
+LABEL modulo<<8>>
+LABEL while<<11>>
+LOAD 1 divisor
+LOAD 0 n
+BOP <=
+FALSEBRANCH continue<<10>>
+LOAD 0 n
+LOAD 1 divisor
+BOP -
+STORE 0 n
+POP 0
+GOTO while<<11>>
+LABEL continue<<10>>
+LOAD 0 n
+RETURN modulo<<8>>
+POP 0
+LIT 0    GRATIS-RETURN-VALUE
+RETURN modulo<<8>>
+LABEL continue<<9>>
+GOTO continue<<13>>
+LABEL gcd<<12>>
+LIT 0 remainder
+LIT 1
+STORE 2 remainder
+LABEL while<<15>>
+LIT 0
+LOAD 2 remainder
+BOP <
+FALSEBRANCH continue<<14>>
+LOAD 0 n
+LOAD 1 m
+ARGS 2
+CALL modulo<<8>>
+STORE 2 remainder
+LOAD 2 remainder
+LIT 0
+BOP !=
+FALSEBRANCH else<<16>>
+LOAD 1 m
+STORE 0 n
+LOAD 2 remainder
+STORE 1 m
+POP 0
+GOTO continue<<17>>
+LABEL else<<16>>
+POP 0
+LABEL continue<<17>>
+POP 0
+GOTO while<<15>>
+LABEL continue<<14>>
+LOAD 1 m
+RETURN gcd<<12>>
+POP 1
+LIT 0    GRATIS-RETURN-VALUE
+RETURN gcd<<12>>
+LABEL continue<<13>>
+GOTO continue<<19>>
+LABEL lcm<<18>>
+LOAD 0 n
+LOAD 1 m
+BOP *
+LOAD 0 n
+LOAD 1 m
+ARGS 2
+CALL gcd<<12>>
+BOP /
+RETURN lcm<<18>>
+POP 0
+LIT 0    GRATIS-RETURN-VALUE
+RETURN lcm<<18>>
+LABEL continue<<19>>
+GOTO continue<<21>>
+LABEL test<<20>>
+LIT 0 temp
+LIT 0 temp1
+LOAD 0 lcm
+LOAD 1 gcd
+BOP *
+ARGS 1
+CALL Write
+STORE 4 temp
+LOAD 2 multiple1
+LOAD 3 multiple2
+BOP *
+ARGS 1
+CALL Write
+STORE 5 temp1
+LOAD 0 lcm
+LOAD 1 gcd
+BOP *
+LOAD 2 multiple1
+LOAD 3 multiple2
+BOP *
+BOP ==
+FALSEBRANCH else<<22>>
+LIT 1
+RETURN test<<20>>
+POP 0
+GOTO continue<<23>>
+LABEL else<<22>>
+POP 0
+LABEL continue<<23>>
+LIT 0
+RETURN test<<20>>
+POP 2
+LIT 0    GRATIS-RETURN-VALUE
+RETURN test<<20>>
+LABEL continue<<21>>
+ARGS 0
+CALL Read
+ARGS 0
+CALL Read
+ARGS 2
+CALL exponent<<2>>
+ARGS 1
+CALL Write
+STORE 0 a
+ARGS 0
+CALL Read
+ARGS 0
+CALL Read
+ARGS 2
+CALL modulo<<8>>
+ARGS 1
+CALL Write
+STORE 0 a
+ARGS 0
+CALL Read
+STORE 0 a
+ARGS 0
+CALL Read
+STORE 1 b
+LOAD 0 a
+LOAD 1 b
+ARGS 2
+CALL gcd<<12>>
+ARGS 1
+CALL Write
+STORE 2 c
+LOAD 0 a
+LOAD 1 b
+ARGS 2
+CALL lcm<<18>>
+ARGS 1
+CALL Write
+STORE 3 d
+LOAD 0 a
+LOAD 1 b
+LOAD 2 c
+LOAD 3 d
+ARGS 4
+CALL test<<20>>
+ARGS 1
+CALL Write
+STORE 3 d
+POP 4
+HALT

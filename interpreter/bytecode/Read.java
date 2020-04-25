@@ -1,8 +1,11 @@
 package interpreter.bytecode;
 
 import interpreter.VirtualMachine;
+import jdk.jfr.Unsigned;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Vector;
 
 public class Read extends ByteCode {
@@ -16,7 +19,8 @@ public class Read extends ByteCode {
   public void execute( VirtualMachine vm ) {
     try {
       System.out.print( "Please enter a number: " );
-      int valueIn = System.in.read();
+      BufferedReader rdr = new BufferedReader(new InputStreamReader(System.in));
+      int valueIn = Integer.parseInt( rdr.readLine() );
       vm.pushStack( valueIn );
     } catch ( IOException e ) { };
   }

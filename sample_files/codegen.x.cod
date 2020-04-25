@@ -7,28 +7,34 @@ LOAD 0 dummyFormal
 WRITE
 RETURN
 LABEL start<<1>>
-LIT 0 boo
 LIT 0 i
 LIT 0 j
-LIT 0 s
-LIT 0 c
 GOTO continue<<3>>
-LABEL increment<<2>>
-LOAD 0 a
-LIT 1
+LABEL f<<2>>
+LIT 0 j
+LIT 0 k
+LOAD 0 i
+LOAD 1 j
 BOP +
-RETURN increment<<2>>
-POP 0
+LOAD 2 k
+BOP +
+LIT 2
+BOP +
+RETURN f<<2>>
+POP 2
 LIT 0    GRATIS-RETURN-VALUE
-RETURN increment<<2>>
+RETURN f<<2>>
 LABEL continue<<3>>
-LOAD 1 i
+LIT 0 m
+LIT 3
+ARGS 1
+CALL f<<2>>
+STORE 2 m
+LOAD 1 j
+LOAD 2 m
+BOP +
 ARGS 1
 CALL Write
-STORE 1 i
-LOAD 2 j
-ARGS 1
-CALL Write
-STORE 1 i
-POP 5
+STORE 0 i
+POP 3
 HALT

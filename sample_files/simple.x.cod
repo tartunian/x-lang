@@ -16,17 +16,21 @@ LIT 9
 BOP +
 STORE 0 i
 LIT 1
-LIT 2
+LIT 3
 BOP ==
 FALSEBRANCH else<<2>>
 LOAD 0 i
 ARGS 1
 CALL Write
 STORE 1 j
+LIT 2
+ARGS 1
+CALL Write
+STORE 1 j
 POP 0
 GOTO continue<<3>>
 LABEL else<<2>>
-LIT 99
+LIT 32
 ARGS 1
 CALL Write
 STORE 1 j

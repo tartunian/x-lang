@@ -371,8 +371,10 @@ public class Codegen extends ASTVisitor {
         t.getChild(1).accept(this);
         storeop(new LabelOpcode(Codes.ByteCodes.GOTO,continueLabel));
         storeop(new LabelOpcode(Codes.ByteCodes.LABEL,elseLabel));
-        t.getChild(2).accept(this);
-        storeop(new LabelOpcode(Codes.ByteCodes.LABEL,continueLabel));
+        if( t.getChildCount() > 2 ) {
+            t.getChild(2).accept(this);
+            storeop(new LabelOpcode(Codes.ByteCodes.LABEL, continueLabel));
+        }
         return null;
     }
 

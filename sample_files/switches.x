@@ -26,5 +26,7 @@ program { boolean boo int i int j string s char c
       }
     default: i=1
   }
+  i=write(i)
+  i=write(j)
   
 }

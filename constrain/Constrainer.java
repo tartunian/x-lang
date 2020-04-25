@@ -42,7 +42,7 @@ public class Constrainer extends ASTVisitor {
    * in the same fashion as source program trees to ensure consisten processing of
    * functions, etc.
    */
-  public static AST readTree, writeTree, intTree, boolTree, falseTree, trueTree, readId, writeId;
+  public static AST readTree, writeTree, intTree, boolTree, charTree, stringTree, falseTree, trueTree, readId, writeId;
 
   public Constrainer(AST t, Parser parser) {
     this.t = t;
@@ -58,7 +58,7 @@ public class Constrainer extends ASTVisitor {
    * t is an IdTree; retrieve the pointer to its declaration
    */
   private AST lookup(AST t) {
-    System.out.println( String.format( "  Constrainer: Looking for %s in symtab.", ((IdentifierTree) t).getSymbol() ) );
+    //System.out.println( String.format( "  Constrainer: Looking for %s in symtab.", ((IdentifierTree) t).getSymbol() ) );
     return (AST) ( symtab.get( ( ( IdentifierTree ) t ).getSymbol() ) );
   }
 
@@ -66,18 +66,28 @@ public class Constrainer extends ASTVisitor {
    * Decorate the IdTree with the given decoration - its decl tree
    */
   private void enter(AST t, AST decoration) {
-    System.out.println( String.format( "  Constrainer: Putting %s into symtab.", ((IdentifierTree) t).getSymbol() ) );
-    symtab.put(((IdentifierTree) t).getSymbol(), decoration);
+    //System.out.println( String.format( "  Constrainer: Putting %s into symtab.", ((IdentifierTree) t).getSymbol() ) );
+    symtab.put( ( ( IdentifierTree ) t ).getSymbol(), decoration);
   }
 
   /**
    * get the type of the current type tree
-   * 
+   *
    * @param t is the type tree
    * @return the intrinsic tree corresponding to the type of t
    */
   private AST getType(AST t) {
-    return (t.getClass() == IntTypeTree.class) ? intTree : boolTree;
+    if( t.getClass() == IntTypeTree.class ) {
+      return intTree;
+    } else if( t.getClass() == BoolTypeTree.class ) {
+      return boolTree;
+    } else if( t.getClass() == CharTypeTree.class ) {
+      return charTree;
+    } else if( t.getClass() == StringTypeTree.class ) {
+      return stringTree;
+    } else {
+      return null;
+    }
   }
 
   public void decorate(AST t, AST decoration) {
@@ -97,13 +107,17 @@ public class Constrainer extends ASTVisitor {
    */
   private void buildIntrinsicTrees() {
     trueTree = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "true", TokenType.Identifier ) ) );
-    enter( trueTree, trueTree.getDecoration() );
+    // Is this the right way to get 'true' into the symtab?
+    //enter( trueTree, trueTree );
     falseTree = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "false", TokenType.Identifier ) ) );
     readId = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "read", TokenType.Identifier ) ) );
     writeId = new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "write", TokenType.Identifier ) ) );
     boolTree = ( new DeclarationTree() ).addChild( new BoolTypeTree() ).addChild( new IdentifierTree( new Token( -1, -1, -1, Symbol.put( "<<bool>>", TokenType.Identifier ) ) ) );
     decorate( boolTree.getChild( 1 ), boolTree );
     intTree = ( new DeclarationTree() ).addChild( new IntTypeTree() ).addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "<<int>>", TokenType.Identifier ) ) ) );
+    charTree = ( new DeclarationTree() ).addChild( new CharTypeTree() ).addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "<<char>>", TokenType.Identifier ) ) ) );
+    stringTree = ( new DeclarationTree() ).addChild( new StringTypeTree() ).addChild( new IdentifierTree( new Token(-1, -1, -1, Symbol.put( "<<string>>", TokenType.Identifier ) ) ) );
+
     decorate( intTree.getChild( 1 ), intTree );
     // to facilitate type checking; this ensures int decls and id decls
     // have the same structure
@@ -114,11 +128,26 @@ public class Constrainer extends ASTVisitor {
     // write tree takes one int parm and returns that value
     writeTree = (new FunctionDeclTree()).addChild(new IntTypeTree()).addChild(writeId);
     AST decl = (new DeclarationTree()).addChild(new IntTypeTree())
-        .addChild(new IdentifierTree(new Token(-1, -1, -1, Symbol.put("dummyFormal", TokenType.Identifier))));
+            .addChild(new IdentifierTree(new Token(-1, -1, -1, Symbol.put("dummyFormal", TokenType.Identifier))));
     AST formals = (new FormalsTree()).addChild(decl);
     writeTree.addChild(formals).addChild(new BlockTree());
     writeTree.accept(this);
     readTree.accept(this);
+
+//    System.out.println( String.format("readTree: %s", readTree) );
+//    System.out.println( String.format("writeTree: %s", writeTree) );
+//    System.out.println( String.format("intTree: %s", intTree) );
+//    System.out.println( String.format("boolTree: %s", boolTree) );
+//    System.out.println( String.format("charTree: %s", charTree) );
+//    System.out.println( String.format("stringTree: %s", Tree) );
+
+//    PrintVisitor pv = new PrintVisitor();
+//    pv.print( "readTree", readTree );
+//    pv.print( "writeTree", writeTree );
+//    pv.print( "intTree", intTree );
+//    pv.print( "boolTree", boolTree );
+//    pv.print( "charTree", charTree );
+//    pv.print( "stringTree", stringTree );
   }
 
   /**
@@ -227,6 +256,7 @@ public class Constrainer extends ASTVisitor {
     enter(idTree, t);
     AST typeTree = getType(t.getChild(0));
     decorate( idTree, typeTree );
+    //System.out.println(String.format("DeclTree %s: Decorating: %s (%s) with %s", t, idTree, idTree.getLabel(), typeTree));
     return null;
   }
 
@@ -310,12 +340,14 @@ public class Constrainer extends ASTVisitor {
   public Object visitAssignTree(AST t) {
     AST idTree = t.getChild(0), idDecl = lookup(idTree), typeTree;
     decorate(idTree, idDecl);
+    //System.out.println(String.format("AssignTree(%s): Decorating: %s with %s", t, idTree, idDecl));
     typeTree = decoration(idDecl.getChild(1));
 
     // now check that the types of the expr and id are the same
     // visit the expr tree and get back its type
     AST o = (AST)t.getChild(1).accept(this);
     if (!o.equals(typeTree)) {
+      //System.out.println(String.format("AssignTree(%s): IdTree %s has TypeTree %s, Expected: %s", t, idTree, typeTree, o) );
       constraintError( ConstrainerErrors.BadAssignmentType, t );
     }
     return null;
@@ -329,7 +361,7 @@ public class Constrainer extends ASTVisitor {
 
   @Override
   public Object visitIdentifierTree(AST t) {
-    System.out.println( String.format( "Constrainer: Visiting %s tree.", t.toString() ) );
+    //System.out.println( String.format( "Constrainer: Visiting %s tree.", t.toString() ) );
     AST decl = lookup( t );
     decorate(t, decl);
     return decoration(decl.getChild(1));
@@ -350,7 +382,7 @@ public class Constrainer extends ASTVisitor {
    * e.g. t1 + t2<br>
    * check that the types of t1 and t2 match, if it's a plus tree then the types
    * must be a reference to the intTree
-   * 
+   *
    * @return the type of the tree
    */
   @Override
@@ -370,49 +402,51 @@ public class Constrainer extends ASTVisitor {
 
   @Override
   public Object visitIntTypeTree(AST t) {
-    System.out.println("IntTypeTree");
+    //System.out.println("IntTypeTree");
     return t;
   }
 
   @Override
   public Object visitBoolTypeTree(AST t) {
-    System.out.println("BoolTypeTree");
+    //System.out.println("BoolTypeTree");
     return null;
   }
 
   @Override
   public Object visitStringTypeTree(AST t) {
-    System.out.println("StringTypeTree");
+    //System.out.println("StringTypeTree");
     return t;
   }
 
   @Override
   public Object visitCharTypeTree(AST t) {
-    System.out.println("CharTypeTree");
+    //System.out.println("CharTypeTree");
     return t;
   }
 
   @Override
   public Object visitStringTree(AST t) {
-    System.out.println("StringTree");
-    return t;
+    //System.out.println("StringTree");
+    decorate(t, stringTree);
+    return stringTree;
   }
 
   @Override
   public Object visitCharTree(AST t) {
-    System.out.println("CharTree");
-    return t;
+    //System.out.println("CharTree");
+    decorate(t, charTree);
+    return charTree;
   }
 
   @Override
   public Object visitFormalsTree(AST t) {
-    System.out.println("Formals");
+    //System.out.println("Formals");
     return t;
   }
 
   @Override
   public Object visitActualArgumentsTree(AST t) {
-    System.out.println("Actuals");
+    //System.out.println("Actuals");
     return t;
   }
 

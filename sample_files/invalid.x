@@ -3,11 +3,10 @@ program {
   int j
   string s
   char c
-  unless s==0 then {
+  unless (s=="s") then {
     s="string"
-  }
-
-  
-  s="String" * 2
+  }  
+  s="String"
   c= 'c'
+  i=write(i)
 }

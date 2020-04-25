@@ -94,9 +94,11 @@ public class Table {
   * Gets the object associated with the specified symbol in the Table.
   */
   public Object get( Symbol key ) {
-    System.out.println( String.format( "    Table: Trying to access %s.", key.toString() ) );
+    //System.out.println( String.format( "    Table: Trying to access %s.", key.toString() ) );
 	  Binder e = symbols.get(key);
-	  return e.getValue();
+	  Object o = e.getValue();
+    //System.out.println( String.format( "    Table: Value for key %s = %s.", key.toString(), o ) );
+    return o;
   }
 
  /**
@@ -105,7 +107,7 @@ public class Table {
   * Add to list of symbols in prior scope with the same string identifier
   */
   public void put( Symbol key, Object value ) {
-    System.out.println( String.format( "    Table: Trying to put %s.", key.toString() ) );
+    //System.out.println( String.format( "    Table: Trying to put %s with %s", key.toString(), value ) );
     symbols.put( key, new Binder( value, top, symbols.get( key ) ) );
     top = key;
   }

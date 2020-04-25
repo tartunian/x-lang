@@ -17,7 +17,6 @@ public class Write extends ByteCode {
   public void execute( VirtualMachine vm ) {
     int value = vm.popStack();
     System.out.println( value );
-    // javaCode = String.format( "System.out.println(%d)", value );
   }
 
 }

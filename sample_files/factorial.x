@@ -1,4 +1,4 @@
-program { boolean j int i
+program { boolean j int i int k int l
   int factorial(int n) {
       if (n < 2) then 
          { return 1 }
@@ -6,6 +6,7 @@ program { boolean j int i
          {return n*factorial(n-1) }
   }
   while (1==1) {
-      i = write(factorial(read()))
+      i = read()
+      l = write(factorial(i))
   }
 }
