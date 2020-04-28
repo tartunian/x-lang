@@ -2,12 +2,12 @@ package interpreter;
 
 public interface IRunTimeStackManager {
 
-    public Integer loadStack( int offset );
+    public Object loadStack( int offset );
     public void newStackFrameAt( int offset );
-    public Integer peekStack();
-    public Integer popStack();
+    public Object peekStack();
+    public Object popStack();
     public void popStackFrame();
-    public Integer pushStack( int value );
-    public Integer storeStack( int offset );
+    public Object pushStack( Object value );
+    public Object storeStack( int offset );
 
 }

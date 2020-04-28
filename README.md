@@ -3,9 +3,9 @@ The purpose of this project is to learn about the compilation process of program
 ## Completed Components
  - [x] Lexer
  - [x] Parser
- - [ ] Constrainer
- - [ ] Compiler
- - [ ] Interpreter
+ - [x] Constrainer
+ - [x] Compiler
+ - [x] Interpreter
 ## Tokens
  - And &
  - Assign =

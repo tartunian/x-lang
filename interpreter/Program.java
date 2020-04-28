@@ -20,7 +20,14 @@ public class Program {
   }
 
   public int getJumpAddress( String label ) {
-    return jumpLabels.get( label );
+    String newLabel = "";
+    if( jumpLabels.containsKey( label ) ) {
+      newLabel = label;
+    } else {
+      newLabel = label.substring( 0,label.lastIndexOf('_') + 1 ) + "default>>";
+    }
+    Integer jumpAddress = jumpLabels.get( newLabel );
+    return jumpAddress;
   }
 
   public ByteCode getCode( int programCounter ) {

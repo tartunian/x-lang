@@ -1,6 +1,6 @@
-program { int i char c string s
-  //i = s > c
-  //i = c >= s
+program { int i boolean b int j char c string s
+  b = s > c
+  b = c >= s
   s = "valid string"
   c = 'z'
   if(1==1) then {
@@ -19,4 +19,5 @@ program { int i char c string s
     case 2: i = 5
     default: i = 42
   }
+  j=write(i)
 }

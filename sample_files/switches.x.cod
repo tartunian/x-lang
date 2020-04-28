@@ -7,28 +7,68 @@ LOAD 0 dummyFormal
 WRITE
 RETURN
 LABEL start<<1>>
-LIT 0 boo
 LIT 0 i
-LIT 0 j
-LIT 0 s
-LIT 0 c
-GOTO continue<<3>>
-LABEL increment<<2>>
-LOAD 0 a
+LIT 5
+STORE 0 i
+LOAD 0 i
+GOTO switch_case<<1587487668_
+LABEL switch_case<<1587487668_1>>
 LIT 1
-BOP +
-RETURN increment<<2>>
-POP 0
-LIT 0    GRATIS-RETURN-VALUE
-RETURN increment<<2>>
-LABEL continue<<3>>
-LOAD 1 i
 ARGS 1
 CALL Write
-STORE 1 i
-LOAD 2 j
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_2>>
+LIT 2
 ARGS 1
 CALL Write
-STORE 1 i
-POP 5
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_3>>
+LIT 3
+ARGS 1
+CALL Write
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_4>>
+LIT 4
+ARGS 1
+CALL Write
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_5>>
+LIT 5
+ARGS 1
+CALL Write
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_6>>
+LOAD 0 i
+GOTO switch_case<<930990596_
+LABEL switch_case<<930990596_6>>
+LOAD 0 i
+GOTO switch_case<<1650967483_
+LABEL switch_case<<1650967483_6>>
+LOAD 0 i
+GOTO switch_case<<1029991479_
+LABEL switch_case<<1029991479_6>>
+LIT 6666
+ARGS 1
+CALL Write
+STORE 0 i
+GOTO switch_end<<1029991479>>
+LABEL switch_end<<1029991479>>
+GOTO switch_end<<1650967483>>
+LABEL switch_end<<1650967483>>
+GOTO switch_end<<930990596>>
+LABEL switch_end<<930990596>>
+GOTO switch_end<<1587487668>>
+LABEL switch_case<<1587487668_default>>
+LIT 0
+ARGS 1
+CALL Write
+STORE 0 i
+GOTO switch_end<<1587487668>>
+LABEL switch_end<<1587487668>>
+POP 1
 HALT

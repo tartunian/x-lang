@@ -16,8 +16,8 @@ public class Bop extends ByteCode {
 
     @Override
     public void execute( VirtualMachine vm ) {
-        int secondOperand = vm.popStack();
-        int firstOperand = vm.popStack();
+        int secondOperand = (int)vm.popStack();
+        int firstOperand = (int)vm.popStack();
         int result = 0;
         switch( operator ) {
             case "+": {

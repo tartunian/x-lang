@@ -1,5 +1,6 @@
-program { int i char c string s
+program { int i char c string s boolean b int j
   i = 0
-  c= 'a'
+  c = 'a'
   s = "aaa"
+  j = write(i)
 }

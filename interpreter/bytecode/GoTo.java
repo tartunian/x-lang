@@ -16,9 +16,12 @@ public class GoTo extends ByteCode {
 
   @Override
   public void execute( VirtualMachine vm ) {
+    if( targetLabel.startsWith("switch_case") ) {
+      Integer caseValue = (Integer)vm.popStack();
+      targetLabel += caseValue.toString() + ">>";
+    }
     int jumpAddress = vm.getJumpAddress( targetLabel );
     vm.setProgramCounter( jumpAddress );
-    //System.out.println( String.format( "Set program counter to %d. Value is %d", jumpAddress, vm.getProgramCounter() ) );
   }
 
 }

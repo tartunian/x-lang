@@ -7,7 +7,6 @@ LOAD 0 dummyFormal
 WRITE
 RETURN
 LABEL start<<1>>
-
 LIT 0 a
 LIT 0 b
 LIT 0 c

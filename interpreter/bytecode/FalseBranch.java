@@ -16,7 +16,7 @@ public class FalseBranch extends ByteCode {
 
     @Override
     public void execute( VirtualMachine vm ) {
-        int val = vm.popStack();
+        int val = (int)vm.popStack();
         boolean b = (val==0) ? false : true;
         if(!b) {
             int jumpAddress = vm.getJumpAddress( targetLabel );

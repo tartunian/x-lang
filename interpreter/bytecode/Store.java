@@ -21,7 +21,7 @@ public class Store extends ByteCode {
   @Override
   public void execute( VirtualMachine vm ) {
     vm.storeStack( offset );
-    javaCode = String.format( "%s = %d", identifier, vm.peekStack() );
+    javaCode = String.format( "%s = %s", identifier, vm.peekStack() );
   }
 
 }

@@ -9,37 +9,22 @@ RETURN
 LABEL start<<1>>
 LIT 0 i
 LIT 0 j
-LIT 0 c
-LIT 0 s
-LIT "valid string"
-STORE 3 s
-LIT 'z'
-STORE 2 c
-LIT 1
-LIT 1
+LOAD 0 i
+LOAD 1 j
 BOP ==
 FALSEBRANCH else<<2>>
 LIT 1
+ARGS 1
+CALL Write
 STORE 0 i
 POP 0
 GOTO continue<<3>>
 LABEL else<<2>>
 LIT 0
+ARGS 1
+CALL Write
 STORE 0 i
 POP 0
 LABEL continue<<3>>
-LIT 1
-LIT 2
-BOP ==
-FALSEBRANCH else<<4>>
-LIT 99
-STORE 0 i
-POP 0
-GOTO continue<<5>>
-LABEL else<<4>>
-LOAD 0 i
-ARGS 1
-CALL Write
-STORE 1 j
-POP 4
+POP 2
 HALT

@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class Constrainer extends ASTVisitor {
   public enum ConstrainerErrors {
-    BadAssignmentType, CallingNonFunction, ActualFormalTypeMismatch, NumberActualsFormalsDiffer, TypeMismatchInExpr,
+    BadAssignmentType, SwitchTypeMismatch, CallingNonFunction, ActualFormalTypeMismatch, NumberActualsFormalsDiffer, TypeMismatchInExpr,
     BooleanExprExpected, BadConditional, ReturnNotInFunction, BadReturnExpr
   }
 
@@ -90,6 +90,20 @@ public class Constrainer extends ASTVisitor {
     }
   }
 
+  private Class getLiteralTypeFromType(AST t) {
+    if( t.getClass() == IntTypeTree.class ) {
+      return IntTree.class;
+    } else if( t.getClass() == BoolTypeTree.class ) {
+      return null;
+    } else if( t.getClass() == CharTypeTree.class ) {
+      return CharTree.class;
+    } else if( t.getClass() == StringTypeTree.class ) {
+      return StringTree.class;
+    } else {
+      return null;
+    }
+  }
+
   public void decorate(AST t, AST decoration) {
     t.setDecoration(decoration);
   }
@@ -139,7 +153,7 @@ public class Constrainer extends ASTVisitor {
 //    System.out.println( String.format("intTree: %s", intTree) );
 //    System.out.println( String.format("boolTree: %s", boolTree) );
 //    System.out.println( String.format("charTree: %s", charTree) );
-//    System.out.println( String.format("stringTree: %s", Tree) );
+//    System.out.println( String.format("stringTree: %s", stringTree) );
 
 //    PrintVisitor pv = new PrintVisitor();
 //    pv.print( "readTree", readTree );
@@ -187,7 +201,10 @@ public class Constrainer extends ASTVisitor {
    */
   @Override
   public Object visitFunctionDeclarationTree(AST t) {
-    AST fname = t.getChild(1), returnType = t.getChild(0), formalsTree = t.getChild(2), bodyTree = t.getChild(3);
+    AST     fname = t.getChild(1),
+            returnType = t.getChild(0),
+            formalsTree = t.getChild(2),
+            bodyTree = t.getChild(3);
     functions.push(t);
     enter(fname, t); // enter function name in CURRENT scope
     decorate(returnType, getType(returnType));
@@ -266,7 +283,7 @@ public class Constrainer extends ASTVisitor {
    */
   @Override
   public Object visitIfTree( AST t ) {
-    System.out.println( t.getChild( 0 ) );
+    //System.out.println( t.getChild( 0 ) );
     if( t.getChild( 0 ).accept( this ) != boolTree ) {
       constraintError( ConstrainerErrors.BadConditional, t );
     }
@@ -311,22 +328,50 @@ public class Constrainer extends ASTVisitor {
   }
 
   @Override
-  public Object visitSwitchBlockTree(AST t) {
+  public Object visitSwitchStatementTree(AST t) {
+    System.out.println( "visitSwitchStatementTree" );
+    AST idType = lookup( t.getChild(0) ).getChild(1).getDecoration().getChild(0);
+    if( idType!= intTree.getChild(0) ) {
+      constraintError( ConstrainerErrors.ActualFormalTypeMismatch, t );
+    }
+    IdentifierTree id = (IdentifierTree)t.getChild(0);
+    id.accept( this );
+    AST switchBlock = t.getChild(1);
+    decorate( switchBlock, t.getChild(0) );
+    switchBlock.accept( this );
     return null;
   }
 
   @Override
-  public Object visitSwitchStatementTree(AST t) {
+  public Object visitSwitchBlockTree(AST t) {
+    System.out.println( "visitSwitchBlockTree" );
+    ArrayList<AST> caseStatements = t.getChildren();
+    for ( AST child : caseStatements ) {
+      decorate( child, t.getDecoration() );
+      child.accept( this );
+    }
     return null;
   }
 
   @Override
   public Object visitCaseStatementTree(AST t) {
+    System.out.println( "visitCaseStatementTree" );
+    AST switcherandDeclaration = lookup( t.getDecoration() ).getChild(0);
+    Class expectedLiteralType = getLiteralTypeFromType( switcherandDeclaration );
+    Class literalType = t.getChild(0).getClass();
+    if( expectedLiteralType!=literalType ) {
+      constraintError( ConstrainerErrors.SwitchTypeMismatch, t );
+    }
+    AST block = t.getChild( 1 );
+    block.accept( this );
     return null;
   }
 
   @Override
   public Object visitDefaultStatementTree(AST t) {
+    System.out.println( "visitDefaultStatementTree" );
+    AST block = t.getChild( 0 );
+    block.accept( this );
     return null;
   }
 
@@ -452,8 +497,8 @@ public class Constrainer extends ASTVisitor {
 
   void constraintError( ConstrainerErrors err, AST tree ) {
     PrintVisitor v1 = new PrintVisitor();
-    v1.visitProgramTree( t );
     System.out.println( "****CONSTRAINER ERROR: " + err + "   ****" );
+    tree.accept( v1 );
     System.exit(1);
     return;
   }

@@ -7,7 +7,7 @@ public class RunTimeStack {
 
   private Stack<Integer> framePointers;
   // This may not be the right parameterized type!!
-  private Vector<Integer> runStack;
+  private Vector<Object> runStack;
   //private Stack<Object> runStack;
   
   // framePointers  [0      3        7  ]
@@ -58,15 +58,15 @@ public class RunTimeStack {
   /**
    * Returns the top item on the runtime stack.
    */
-  public int peek() {
+  public Object peek() {
     return runStack.lastElement();
   }
 
   /**
    * Pops the top item from the runtime stack, returning the item.
    */
-  public int pop() {
-    int result = runStack.lastElement();
+  public Object pop() {
+    Object result = runStack.lastElement();
     runStack.remove( runStack.size() - 1 );
     return result;
   }
@@ -75,7 +75,7 @@ public class RunTimeStack {
    * Push an item on to the runtime stack, returning the item that was just 
    * pushed.
    */
-  public int push( int item ) {
+  public Object push( Object item ) {
     return runStack.add( item ) ? peek() : null;
   }
 
@@ -83,9 +83,9 @@ public class RunTimeStack {
    * This second form with an Integer parameter is used to load literals onto the
    * stack.
    */
-  public Integer push( Integer i ) {
-    return push( i );
-  }
+//  public Integer push( Integer i ) {
+//    return push( i );
+//  }
 
   /**
    * Start a new frame, where the parameter offset is the number of slots
@@ -101,7 +101,7 @@ public class RunTimeStack {
    * pop the top frame, and then push the return value.
    */
   public void popFrame() {
-    int value = runStack.lastElement();
+    Object value = runStack.lastElement();
     while( runStack.size() != framePointers.peek() ) {
       pop();
     }
@@ -112,17 +112,19 @@ public class RunTimeStack {
   /**
    * Used to store into variables.
    */
-  public int store( int offset ) {
+  public Object store( int offset ) {
     int frameStart = framePointers.peek();
     int storeLocation = frameStart + offset;
-    int value = pop();
+    Object value = pop();
+//    System.out.println( String.format("Storing value: %s at offset %d from frameStart %d. Length is %d", value, offset, frameStart, runStack.size()));
+//    System.out.println( toString() );
     return runStack.set( storeLocation, value );
   }
 
   /**
    * Used to load variables onto the stack.
    */
-  public int load( int offset ) {
+  public Object load( int offset ) {
     int frameStart = framePointers.peek();
     runStack.add( runStack.get( frameStart + offset ) );
     return peek();

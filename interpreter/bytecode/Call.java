@@ -23,7 +23,7 @@ public class Call extends ByteCode {
     vm.setProgramCounter( jumpAddress - 1 );
     Matcher m = Pattern.compile( "\\w+" ).matcher( functionLabel );
     m.find();
-    javaCode = String.format( "%s(%d)", m.group( 0 ), vm.peekStack() );
+    javaCode = String.format( "%s(%s)", m.group( 0 ), vm.peekStack() );
   }
 
 }

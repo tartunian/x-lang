@@ -84,7 +84,7 @@ public class VirtualMachine implements IRunTimeStackManager {
   }
 
   @Override
-  public Integer loadStack( int offset ) {
+  public Object loadStack( int offset ) {
     return runTimeStack.load( offset );
   }
 
@@ -94,12 +94,12 @@ public class VirtualMachine implements IRunTimeStackManager {
   }
 
   @Override
-  public Integer peekStack() {
+  public Object peekStack() {
     return runTimeStack.peek();
   }
 
   @Override
-  public Integer popStack() {
+  public Object popStack() {
     return runTimeStack.pop();
   }
 
@@ -109,12 +109,12 @@ public class VirtualMachine implements IRunTimeStackManager {
   }
 
   @Override
-  public Integer pushStack( int item ) {
+  public Object pushStack( Object item ) {
     return runTimeStack.push( item );
   }
 
   @Override
-  public Integer storeStack( int offset ) {
+  public Object storeStack( int offset ) {
     return runTimeStack.store( offset );
   }
 
