@@ -1,9 +1,12 @@
-package interpreter.bytecode;
+package interpreter.bytecode.debuggercodes;
 
 import interpreter.VirtualMachine;
+import interpreter.debugger.DebuggerVirtualMachine;
+import interpreter.debugger.ui.DebuggerCommand;
+
 import java.util.Vector;
 
-public class Args extends ByteCode {
+public class Args extends DebuggerByteCode {
 
   int numArgs;
 
@@ -16,6 +19,11 @@ public class Args extends ByteCode {
   @Override
   public void execute( VirtualMachine vm ) {
     vm.newStackFrameAt( numArgs );
+  }
+
+  @Override
+  public void execute(DebuggerVirtualMachine vm) {
+    execute( (VirtualMachine) vm );
   }
 
 }

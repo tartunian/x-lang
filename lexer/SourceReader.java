@@ -29,10 +29,6 @@ public class SourceReader {
 
   public SourceReader( String sourceFile, boolean enableDebugOutput ) throws IOException {
     this.enableDebugOutput = enableDebugOutput;
-    if( this.enableDebugOutput ) {
-      System.out.println("Source file: " + sourceFile);
-      System.out.println("user.dir: " + System.getProperty("user.dir"));
-    }
     this.sourceFile = sourceFile;
     source = new BufferedReader( new FileReader( sourceFile ) );
   }

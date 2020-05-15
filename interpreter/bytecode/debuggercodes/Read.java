@@ -1,13 +1,15 @@
-package interpreter.bytecode;
+package interpreter.bytecode.debuggercodes;
 
 import interpreter.VirtualMachine;
+import interpreter.debugger.DebuggerVirtualMachine;
+import interpreter.debugger.ui.DebuggerCommand;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Vector;
 
-public class Read extends ByteCode {
+public class Read extends DebuggerByteCode {
 
   @Override
   public void init(Vector<String> args) {
@@ -27,6 +29,11 @@ public class Read extends ByteCode {
       }
     }
     vm.pushStack( input );
+  }
+
+  @Override
+  public void execute(DebuggerVirtualMachine vm) {
+    execute( (VirtualMachine) vm );
   }
 
 }

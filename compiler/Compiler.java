@@ -10,6 +10,9 @@ import constrain.Constrainer;
 import codegen.*;
 import visitor.*;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
@@ -36,6 +39,19 @@ public class Compiler {
       //System.out.println("---------------AST-------------");
       PrintVisitor pv = new PrintVisitor();
       //t.accept(pv);
+
+      CountVisitor countVisitor = new CountVisitor();
+      OffsetVisitor offsetVisitor = new OffsetVisitor();
+      countVisitor.visitProgramTree( t );
+      int[] treeDepthCount = countVisitor.getCount();
+      offsetVisitor.visitProgramTree( t );
+      DrawOffsetVisitor drawOffsetVisitor = new DrawOffsetVisitor( treeDepthCount, offsetVisitor.getOffsetHashMap() );
+      drawOffsetVisitor.visitProgramTree( t );
+      String name = String.format( "%s_ASTRender.png", sourceFile.substring( sourceFile.indexOf('\\') + 1 ) );
+      File renderFile = new File( name );
+      ImageIO.write( drawOffsetVisitor.getImage(), "png", renderFile );
+      Desktop.getDesktop().open( renderFile );
+
       /* COMMENT CODE FROM HERE UNTIL THE CATCH CLAUSE WHEN TESTING PARSER */
       Constrainer con = new Constrainer(t, parser);
       con.execute();

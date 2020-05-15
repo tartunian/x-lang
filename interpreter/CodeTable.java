@@ -30,15 +30,16 @@ public class CodeTable {
     codeTable.put( "WRITE", Write.class );
   }
 
-  public static ByteCode get( String code ) {
-    try {
-      Class<?> byteCodeType = codeTable.get( code );
-      Constructor<?> c = byteCodeType.getConstructor();
-      return ( ByteCode ) c.newInstance();
-    } catch ( NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-      System.out.println( String.format( "No class file found for ByteCode %s. Recompile?", code ) );
-    }
-    return null;
+  public static String get( String code ) {
+    return codeTable.get( code ).getName();
+    //    try {
+//      Class<?> byteCodeType = codeTable.get( code );
+//      Constructor<?> c = byteCodeType.getConstructor();
+//      return ( ByteCode ) c.newInstance();
+//    } catch ( NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+//      System.out.println( String.format( "No class file found for ByteCode %s. Recompile?", code ) );
+//    }
+//    return null;
   }
 
 }

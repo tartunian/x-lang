@@ -1,11 +1,13 @@
 package interpreter;
 
 import interpreter.bytecode.ByteCode;
-import interpreter.bytecode.Label;
+import interpreter.debugger.DebuggerCodeTable;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -29,7 +31,7 @@ public class ByteCodeLoader {
       Vector<String> args = new Vector<>();
       if( tokenizer.hasMoreTokens() ) {
         String codeString = tokenizer.nextToken().toUpperCase();
-        code = CodeTable.get( codeString );
+        code = instantiateByteCode( codeString );
         args.add( codeLine );
         while( tokenizer.hasMoreTokens() ) {
           args.add( tokenizer.nextToken() );
@@ -38,6 +40,18 @@ public class ByteCodeLoader {
       }
     }
     return program;
+  }
+
+  private ByteCode instantiateByteCode( String code ) {
+    String className = DebuggerCodeTable.get( code );
+    try {
+      Class<?> byteCodeType = Class.forName( className );
+      Constructor<?> constructor = byteCodeType.getConstructor();
+      return ( ByteCode ) constructor.newInstance();
+    } catch ( ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+      System.out.println( String.format( "No class file found for ByteCode %s. Recompile?", code ) );
+    }
+    return null;
   }
 
 }

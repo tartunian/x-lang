@@ -10,7 +10,7 @@ public class Symbol {
   // token kind of symbol
   private TokenType type;
 
-  private Symbol( String n, TokenType type ) {
+  public Symbol( String n, TokenType type ) {
     name = n;
     this.type = type;
   }
@@ -33,7 +33,6 @@ public class Symbol {
   public TokenType getType() {
     return type;
   }
-
 
   /**
    * Return the unique symbol associated with a string.

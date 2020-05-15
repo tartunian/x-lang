@@ -1,0 +1,50 @@
+GOTO start<<1>>
+LABEL start<<1>>
+LINE 1
+FUNCTION main 1 11
+LIT 0 j
+LIT 0 i
+GOTO continue<<3>>
+LABEL continue<<3>>
+LABEL while<<7>>
+LINE 8
+LIT 1
+LIT 1
+BOP ==
+FALSEBRANCH continue<<6>>
+LINE 9
+ARGS 0
+CALL Read
+LABEL Read
+LINE -1
+FUNCTION Read -1 -1
+READ
+RETURN
+ARGS 1
+CALL factorial<<2>>
+LABEL factorial<<2>>
+LINE 2
+FUNCTION factorial 2 7
+FORMAL n 0
+LINE 3
+LOAD 0 n
+LIT 2
+BOP <
+FALSEBRANCH else<<4>>
+LABEL else<<4>>
+LINE 6
+LOAD 0 n
+LOAD 0 n
+LIT 1
+BOP -
+ARGS 1
+CALL factorial<<2>>
+LABEL factorial<<2>>
+LINE 2
+FUNCTION factorial 2 7
+FORMAL n 0
+LINE 3
+LOAD 0 n
+LIT 2
+BOP <
+FALSEBRANCH else<<4>>

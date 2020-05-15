@@ -2,6 +2,11 @@ package constrain;
 
 import lexer.Symbol;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 /** <pre>
  *  Binder objects group 3 fields
  *  1. a value
@@ -138,5 +143,18 @@ public class Table {
   /**
    * @return a set of the Table's symbols.
    */
-  public java.util.Set<Symbol> keys() {return symbols.keySet();}
+  public java.util.Set<Symbol> keys() { return symbols.keySet(); }
+
+  public String toString() {
+    String output = "";
+    ArrayList<Symbol> symbolList = new ArrayList<Symbol>( symbols.keySet() );
+    for ( int i=0; i<symbolList.size(); i++ ) {
+      output += String.format( "<%s/%s>", symbolList.get( i ).toString(), symbols.get( symbolList.get( i ) ).getValue() );
+      if( i < symbolList.size() - 1 ) {
+        output += ", ";
+      }
+    }
+    return String.format( "(%s)", output );
+  }
+
 }

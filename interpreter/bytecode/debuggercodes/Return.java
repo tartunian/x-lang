@@ -1,10 +1,11 @@
-package interpreter.bytecode;
+package interpreter.bytecode.debuggercodes;
 
 import interpreter.VirtualMachine;
+import interpreter.debugger.DebuggerVirtualMachine;
 
 import java.util.Vector;
 
-public class Return extends ByteCode {
+public class Return extends DebuggerByteCode {
 
   @Override
   public void init( Vector<String> args ) {
@@ -17,6 +18,12 @@ public class Return extends ByteCode {
     vm.popStackFrame();
     int returnAddress = vm.popReturnAddress();
     vm.setProgramCounter( returnAddress );
+  }
+
+  @Override
+  public void execute( DebuggerVirtualMachine vm ) {
+    execute( (VirtualMachine) vm );
+    vm.getDebugger().exitScope();
   }
 
 }

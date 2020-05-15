@@ -26,8 +26,8 @@ import java.util.Vector;
 
 public abstract class ByteCode {
 
-  String codeLine = "";
-  String javaCode = "";
+  protected String codeLine = "";
+  protected String javaCode = "";
 
   public void init( Vector<String> args ) {
     codeLine = args.firstElement();

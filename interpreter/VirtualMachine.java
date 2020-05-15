@@ -30,24 +30,23 @@ import interpreter.bytecode.Dump;
 
 public class VirtualMachine implements IRunTimeStackManager {
 
-  private int pc;
-  private RunTimeStack runTimeStack;
+  protected int pc;
+  protected RunTimeStack runTimeStack;
   // This may not be the right parameterized type!!
-  private Stack<Integer> returnAddresses;
-  private boolean isRunning;
-  private boolean dumpEnabled = false;
-  private Program program;
+  protected Stack<Integer> returnAddresses;
+  protected boolean isRunning;
+  protected boolean dumpEnabled = false;
+  protected Program program;
 
   public VirtualMachine( Program program ) {
-    this.program = program;
-  }
-
-  public void executeProgram() {
     pc = 0;
     runTimeStack = new RunTimeStack();
     returnAddresses = new Stack<>();
     isRunning = true;
+    this.program = program;
+  }
 
+  public void executeProgram() {
     while ( isRunning ) {
       ByteCode code = program.getCode( pc );
       code.execute( this );
